@@ -1,0 +1,47 @@
+<!-- v-for遍历数组 -->
+<!-- v-for指令就是通过循环的方式渲染一个列表，循环的对象可以是数组，也可以是
+一个JavaScript对象 -->
+<!-- v-for表达式的语法形式为item in ites。其中，items是源数据数组；item是被迭代的
+数组元素的别名。 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>v-for-array</title>
+</head>
+<body>
+    <div id="app">
+        <ul>
+            <li v-for="book in books">
+                {{ book.title }}
+            </li>
+        </ul>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    books: [
+                        {title: 'vue 无难事'},
+                        {title: 'vue深入详解'},
+                        {title: 'Servlet/JSP深入详解'},
+                        {title: '排头位'},
+                    ],
+                }
+            }
+        }).mount('#app')
+    </script>
+
+    <!-- 组件实例的数据对象中定义了一个数组属性books，然后再<li>元素上使用v-for指令
+    遍历该数组，这将循环渲染<li>元素。在v-for块中，可以访问所有父作用域的属性，book是
+    数组中元素的别名，每次循环，book的值都被重置为数组当前索引的值，在<li>元素内部，可以
+    通过Mustache语法引用该变量。 -->
+    
+</body>
+</html>
+

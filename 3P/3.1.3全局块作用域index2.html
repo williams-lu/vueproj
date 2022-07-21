@@ -1,0 +1,22 @@
+<!-- 全局块作用域绑定 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>index2</title>
+    <script>
+        let greeting = "Welcome";
+        console.log(window.greeting);    //undefined
+
+        const Screen = "liquid crystal";
+        console.log(Screen === window.Screen);     //false
+    </script>
+    <!-- 如果在全局作用域下使用let或者const,则会在全局作用域下创建一个新的
+    绑定，但该绑定不会成为window对象的属性 -->
+</head>
+<body>
+    
+</body>
+</html>

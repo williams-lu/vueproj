@@ -1,0 +1,36 @@
+<!-- 10.2使用prop向子组件传递数据案例2 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.2章案例</title>
+</head>
+<body>
+    <div id="app">
+        <post-list></post-list>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({});
+
+        const PostItem = {
+            props: ['postTitle'],
+            template: '<h3>{{ postTitle }}</h3>'
+        };
+
+        app.component('PostList', {
+            components: {
+                PostItem
+            },
+            //在字符串模板中可以直接使用PascalCase命名的组件名，
+            //和camelCase命名的prop名
+            template: '<div><PostItem postTitle="Vue 玩水" /></div>'
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>

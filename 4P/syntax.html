@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Hello Vue.js</Vue></title>
+        <script src="https://unpkg.com/vue@next"></script>
+    </head>
+
+    <body>
+        <!--View-->
+        <div id="app">
+            <!--简单的文本插入-->
+            <p>{{ message }}</p>
+            <!--使用JavaScript表达式-->
+            <p>{{ message.toUpperCase() }}</p>
+            <!--HTML代码将以普通文本的方式输出-->
+            <p>{{ spanHtml }}</p>
+            <!--输出HTML代码-->
+            <p v-html="spanHtml"></p>
+            <!--使用v-bind指令对HTML元素的属性进行绑定-->
+            <a v-bind:href="url">新浪网</a>
+        </div>
+
+        <script src="https://unpkg.com/vue@next"></script>
+        <script>
+            const App = {
+                data(){
+                    return {
+                        message: "Hello Vue.js",
+                        url: "https://www.sina.com.cn/",
+                        spanHtml: `
+                            <span style='color: red'>
+                                Html元素,以红色字体显示
+                            </span>`
+                    }
+                }
+            };
+
+            const app = Vue.createApp(App);
+            const vm = app.mount('#app');
+        </script>
+    </body>
+</html>

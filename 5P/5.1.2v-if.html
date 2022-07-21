@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>v-if</title>
+</head>
+<body>
+    <div id="app">
+        <h1 v-if="yes">Yes！</h1>
+        <h1 v-if="no">No！</h1>
+        <h1 v-if="age >= 25">Age: {{ age }}</h1>
+        <h1 v-if="name.indexOf('Smith') >= 0">Name: {{ name }}</h1>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    yes: true,
+                    no: false,
+                    age: 18,
+                    name: 'Will Smith',
+                }
+            }
+        }).mount('#app');
+    </script>、
+
+    <!-- v-if指令在HTML元素显示与否的实现机制上与v-show指令不同，当表达式的值为false时，
+    v-if指令不会创建该元素，只有当表达式的值为true时，v-if指令才会真正创建该元素 -->
+</body>
+</html>

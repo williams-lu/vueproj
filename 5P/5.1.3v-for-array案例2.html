@@ -1,0 +1,40 @@
+<!-- 5.1.3v-for-array案例2 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <title>v-for-array</title>
+</head>
+<body>
+    <div id="app">
+        <ul>
+            <li v-for="(book,index) in books">
+                {{ index+1 }} - {{ book.title }}
+            </li>
+        </ul>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    books: [
+                        {title: 'vue 无难事'},
+                        {title: 'vue深入详解'},
+                        {title: 'Servlet/JSP深入详解'},
+                        {title: '排头位'},
+                    ],
+                }
+            }
+        }).mount('#app')
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!-- 5.1内置指令v-show -->
+
+<!-- Vue.js针对一些常用的页面功能提供了以指令封装的使用形式，以HTML元素属性的方式使用，这些指令数量
+并不是很多 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>v-show指令</title>
+</head>
+<body>
+    <div ip="app">
+        <h1 v-show="yes">Yes！</h1>
+        <h1 v-show="no">No！</h1>
+        <h1 v-show="age >= 25">Age: {{ age }}</h1>
+        <h1 v-show="name.indexOf('Smith') >= 0">Name: {{ name }}</h1>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    yes: true,
+                    no: false,
+                    age: 28,
+                    name: 'Will Smith',
+                }
+            }
+        }).mount('#app');
+    </script>
+
+
+    <!-- v-show指令不管表达式的值是真是假，元素本身都会被创建的，显示与否是
+    通过CSS的样式属性display控制的 -->
+</body>
+</html>

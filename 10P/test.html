@@ -1,0 +1,25 @@
+<!DOCTYPE <html>
+    <head>
+        <meta charset="utf-8">
+        <title>Vue Component</title>
+    </head>
+    <body>
+        <div id="app">
+            <!-- 在 HTML 中是 kebab-case (短横线命名) 的会被渲染 -->
+            <my-component></my-component>
+            <my-Component></my-Component>
+            <My-component></My-component>
+            <My-Component></My-Component>
+        </div>
+    </body>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script>
+        // 注册时：PascalCase (首字母大写命名)、camelCase (驼峰命名)、kebab-case (短横线命名) 都可以
+        Vue.component('MyComponent', {
+            template: '<div>Hello Vue</div>'
+        });
+        new Vue ({
+            el: '#app'
+        });
+    </script>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全局块作用域绑定案例1</title>
+    <script>
+        var greeting = "Welcome";
+        console.log(window.greeting);     //Welcome
+
+        console.log(window.Screen);    // function Screen(){[native code]}
+        var Screen = "liquid crystal";
+
+        console.log(window.Screen);     // liquid crystal
+
+        // document.write("可用高度：" + screen.availHeight);
+        // document.write("可用宽度：" + screen.availWidth);
+    </script>
+</head>
+<body>
+    <h1>全局块作用域绑定1</h1>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>v-if-template</title>
+</head>
+<body>
+    <div id="app">
+        <template v-if='!isLogin'>
+            <form>
+                <p>username: <input type="text"></p>
+                <p>password: <input type="password"></p>
+            </form>
+        </template>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    isLogin: false
+                }
+            }
+        }).mount('#app');
+    </script>
+
+    <!-- 一般来说，v-if有更高的切换开销，而v-show有更高的初始渲染开销。
+    因此如果需要非常频繁地切换元素的显示和隐藏，则使用v-show更好 -->
+</body>
+</html>

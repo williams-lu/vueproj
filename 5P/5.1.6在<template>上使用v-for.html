@@ -1,0 +1,39 @@
+<!-- 5.1.6在<template>上使用v-for -->
+<!-- 类似于v-if,也可以利用带v-for指令的<template>循环渲染一段包含
+多个元素的内容。 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在<template>上使用v-for</title>
+</head>
+<body>
+    <div id="app">
+        <ul>
+            <template v-for="item in items">
+                <li>{{ item.msg }}</li>
+                <li>{{ item.code }}</li>
+            </template>
+        </ul>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    items: [
+                        {msg: 'Vue深入详解', code: 'QQ' },
+                        {msg: 'soildword', code: 'QQ' },
+                        {msg: 'UG', code: 'QQ' },
+                    ],
+                }
+            }
+        }).mount('#app');
+    </script>
+
+</body>
+</html>

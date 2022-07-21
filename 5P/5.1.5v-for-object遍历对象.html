@@ -1,0 +1,42 @@
+<!-- 5.1.5v-for-object遍历对象 -->
+<!-- 遍历对象的语法形式和遍历数组是一样的，即value in object。
+其中，object是被选中对象；value是被迭代的对象属性的别名。 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>v-for-object遍历对象</title>
+</head>
+<body>
+    <div id="app">
+        <ul>
+            <li v-for=" value in book ">{{ value }}</li>
+            <br>
+            <li v-for=" (value, key ) in book ">{{ key }} : {{ value }}</li>
+            <!-- 获取对象的属性名，使用可选的属性名参数（键名）作为第二个参数。 -->
+            <br>
+            <li v-for=" ( value, key, index ) in book">{{ index }}.{{ key }} : {{ value }}</li>
+            <!-- 使用第3个参数获取索引 -->
+        </ul>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    book: {
+                        title: 'Vue深入详解',
+                        author: '老孙',
+                        isbn: '123456789'
+                    }
+                }
+            }
+        }).mount('#app')
+        
+    </script>
+</body>
+</html>

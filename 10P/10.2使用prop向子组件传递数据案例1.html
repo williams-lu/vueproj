@@ -1,0 +1,46 @@
+<!-- 10.2使用prop向子组件传递数据案例1 -->
+
+<!-- 10.2使用prop向子组件传递数据
+组件时当作自定义元素来使用的，元素一般是有属性的，同样，组件也是有属性。
+在使用组件时，当组件元素设置属性，组件内部如何接收呢？首先需要在组件内部
+注册一些自定义的属性，成为prop，这些prop是在组件的props选项中定义的；之后，
+在使用组件时，就可以将这些prop的名称作为元素的属性名来使用，通过属性向组件
+传递数据，这些数据作为组件实例的属性被使用。 -->
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.2章案例</title>
+</head>
+<body>
+    <div id="app">
+        <post-item post-title="Vue 完税"></post-item>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({});
+        app.component('PostItem', {
+            //声明props
+            props: ['postTitle'],
+                //postTitle就像data中定义的数据属性一样，
+                //在该组件中可以如"this.postTitle"这样使用
+                template: '<h3>{{ postTitle }}</h3>'
+        });
+        app.mount('#app');
+    </script>
+
+    <!-- 
+        说明：
+        1.正如代码注释中所述，在props选项中定义的prop，可以作为组件实例的数据属性使用。
+        2.props选项中声明的每一个prop，，在使用组件时，作为元素的自定义属性使用，属性值会被传递给组件内部的prop。
+        3.已不止一次提到过，HTML中的属性名是不区分大小写的，浏览器在加载HTML页面的时候，会统一转换成小写字符，采用camelCase（驼峰命名法）的prop
+        名要使用其等价的kebab-case（短横线分隔命名）名称。如果在字符串模板中或单文件组件内使用，则没有这个限制。案例2展示
+     -->
+</body>
+</html>

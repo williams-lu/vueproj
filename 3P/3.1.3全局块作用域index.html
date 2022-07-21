@@ -1,0 +1,24 @@
+<!-- 全局块作用域绑定 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>index</title>
+    <script>
+        var greeting = "Welcome";
+        console.log(window.greeting);    //Welcome
+
+        console.log(window.Screen);      //function Screen(){[native code]}
+        var Screen = "liquid crystal";
+
+        console.log(window.Screen);     //liquid crystal
+    </script>
+    <!-- greeting被定义为一个全局变量，并立即成为window对象的属性。定义的全局
+    变量Screen,则覆盖了window对象中原有的Screen属性。 -->
+</head>
+<body>
+    
+</body>
+</html>

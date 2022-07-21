@@ -1,0 +1,40 @@
+<!-- 10.1全局注册与本地注册案例2 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>案例2</title>
+</head>
+<body>
+        
+    <div id="app">
+        <button-counter></button-counter>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const MyComponent = {
+            data() {
+                return {
+                    count: 0
+                }
+            },
+            template:
+                `<button v-on:click="count++">
+                    You clicked me {{ count }} times.
+                </button>`
+        };
+    
+        const app = Vue.createApp({
+            components: {
+                ButtonCounter: MyComponent
+            }
+        }).mount('#app');
+    </script>
+    <!-- 对于component选项对象，它的每个属性的名称就是自定义元素的名称，其属性值就是这个组件的选项对象
+    全局注册组件可以在该应用程序中的任何组件实例的模板中使用，而局部注册组件只能在父组件的模板中使用 -->
+  
+</body>
+</html>
