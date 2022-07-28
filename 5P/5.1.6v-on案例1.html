@@ -1,0 +1,65 @@
+<!-- 5.1.6v-on案例1 -->
+
+<!-- v-on指令用于监听DOM事件，并在触发时运行一些JavaScript代码。
+v-on指令的表达式可以是一段JavaScript代码，也可以是一个方法的名字或者方法调用语句。 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5.1.6v-on案例1</title>
+</head>
+<body>
+    <div id="app">
+        <p>
+            <!-- 1. click事件直接使用JavaScript语句 -->
+            <button v-on:click="count += 1">Add 1</button>
+            <span>count: {{ count }}</span>
+        </p>
+        <p>
+            <!-- 2. click事件直接绑定一个方法 -->
+            <button v-on:click="greet">Greet</button>
+            <!-- 简写语法 -->
+            <button @click="greet">Greet</button>
+        </p>
+        <p>
+            <!-- 3. click事件使用内联语句调用方法 -->
+            <button v-on:click="say('Hi')">Hi</button>
+        </p>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    count: 0,
+                    message: 'Hello, Vue.js!',
+                }
+            },
+            // 在选项对象的methods属性对象中定义方法
+            methods: {
+                greet: function() {
+                    // 方法的this值始终指向组件实例
+                    alert(this.message)
+                },
+                // 对象方法的简写语法
+                say(msg) {
+                    alert(msg)
+                }
+            }
+        }).mount('#app')
+    </script>
+
+    <!-- 说明：
+    1).方法是在选项对象的methods选项定义的，该选项是一个对象属性。在methods选项中定义的方法，可以
+    直接通过组件实例访问，也可以从组件的模板中访问这些方法。在模板中，方法最常用作事件监听器。
+    2).虽然v-on指令的表达式可以直接书写JavaScript语句，但在实际开发中，由于事件处理逻辑通常比较复杂
+    ，所以常用2、3形式。
+    3).在页面渲染的结果中，并不会在v-on指令所在元素上出现对应的JavaScript事件属性。
+    4).当组件实例销毁时，所有的事件监听器都会被自动删除，所以无须担心如何清理它们。-->
+
+
+</body>
+</html>

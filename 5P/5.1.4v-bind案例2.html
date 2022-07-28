@@ -1,0 +1,34 @@
+<!-- 5.1.4 v-bind -->
+
+<!-- v-bind主要响应更新HTML元素的属性，将一个/多个属性或一个组件的prop动态绑定到表达式 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5.1.4 v-bind案例2</title>
+</head>
+<body>
+    <div id="app">
+        <!-- 绑定一个有属性的对象 -->
+        <form v-bind="formObj">
+            <input type="text">
+        </form>
+    </div>
+    
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    formObj: {
+                        method: 'get',
+                        action: '#',
+                    }
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+<!-- 5.1.5v-model案例1 -->
+
+<!-- v-model指令用来在表单<input> <textarea>和<select>元素上创建创建双向数据绑定，
+    它会根据控件类型自动选取正确的方法来更新元素。但本质不过是语法糖 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5.1.5v-model案例1</title>
+</head>
+<body>
+    <div id="app">
+        <input type="text" v-model="message">
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    message: 'Hello World'
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!-- 5.1.6v-on案例2 -->
+
+
+<!-- 如果在事件绑定的方法中需要访问原始的DOM事件，可以使用特殊的变量$event把它们传入方法。我们知道
+在单击链接的时候，会跳转到链接指向的页面，然后有时候会根据某个条件是否达成来决定是否跳转，如果条件
+不满足，这时会调用事件对象的preventDefault()方法阻止跳转。 --> 
+
+<!-- 在使用v-on指令绑定事件处理器时，就可以使用$event传入原始的DOM事件对象，然后在事件处理器
+方法中访问原生的事件对象 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5.1.6v-on案例2</title>
+</head>
+<body>
+    <div id="app">
+        <p>
+            <a href="/login" v-on:click="login($event)">登录</a>
+        </p>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    count: 0,
+                    message: 'Hello, Vue.js!',
+                }
+            },
+            methods: {
+                login(event) {
+                    //...
+                    if(event)
+                        event.preventDefault();
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
+
+

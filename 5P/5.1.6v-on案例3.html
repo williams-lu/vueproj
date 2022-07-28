@@ -1,0 +1,41 @@
+<!-- 5.1.6v-on案例3 -->
+
+<!-- 在事件方法中如果要访问事件绑定的原始DOM元素节点对象，可以调用event.currentTarget得到
+在使用时，可以有多个方法，用逗号运算符隔开 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5.1.6v-on案例3</title>
+</head>
+<body>
+    <div id="app">
+        <!-- 当单击按钮时，one()和two()方法都将执行 -->
+        <button @click="one($event), two($event)">
+            Submit
+        </button>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    count: 0,
+                    message: 'Hello, Vue.js!',
+                }
+            },
+            methods: {
+                one(event) {
+                    //第一个处理逻辑...
+                },
+                two(event) {
+                    //第二个处理逻辑...
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>
