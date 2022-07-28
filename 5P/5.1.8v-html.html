@@ -1,0 +1,28 @@
+<!-- 5.1.8v-html -->
+
+<!-- v-html指令用于更新元素的innerHTML,该部分内容作为普通的HTML代码插入，不会作为Vue模板进行编译。 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5.1.8v-html</title>
+</head>
+<body>
+    <div id="app">
+        <div v-html="hElt"></div>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    hElt: "<h1>Hello, Vue.js!</h1>"
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

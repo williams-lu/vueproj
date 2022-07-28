@@ -1,0 +1,43 @@
+<!-- 5.1.9v-once -->
+
+<!-- v-once指令可以让元素或组件只渲染一次，该指令不需要表达式。之后再次渲染时，元素/组件及其所有的子节点将被视为静态内容并跳过 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5.1.9v-once</title>
+    <style>
+        a {
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>{{ title }}</h1>
+        <a v-for="nav in navs" :href="nav.url" v-once>{{ nav.name }}</a>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    title: 'v-once指令用法',
+                    navs: [
+                        { name: '首页', url: '/home' },
+                        { name: '新闻', url: '/news' },
+                        { name: '视频', url: '/video' },
+                    ]
+                }
+            }
+        }).mount('#app');
+    </script>
+
+    <!-- 区别：切换到Console窗口，输入如下
+    vm.navs.push({ name: '论坛', url: '/bbs' }) 
+    发现没变化 即渲染一次后被作为静态内容存在。-->
+</body>
+</html>

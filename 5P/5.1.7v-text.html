@@ -1,0 +1,31 @@
+<!-- 5.1.7v-text -->
+
+<!-- v-text指令用于更新元素的文本内容（即元素的textContent属性） -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5.1.7v-text</title>
+</head>
+<body>
+    <div id="app">
+        <span v-text="message"></span>
+        <!-- 等价于
+        <span v-text>{{ message }}</span>
+        -->
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    message: 'Hello, Vue.js!',
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
