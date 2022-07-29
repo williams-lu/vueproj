@@ -1,0 +1,40 @@
+<!-- 5.1.4 v-bind -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5.1.4 v-bind</title>
+</head>
+<body>
+    <div id="app">
+        <!-- 绑定一个属性 -->
+        <img v-bind:src="imgSrc">
+
+        <!-- 简写语法 -->
+        <img :src="imgSrc">
+
+        <!-- 动态属性名 -->
+        <a v-bind:[attrname]="url">链接</a>
+
+        <!-- 内联字符串拼接 -->
+        <img :src="'images/' + fileName">
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    attrname: 'href',
+                    url: 'http://www.baidu.com',
+                    imgSrc: 'images/bg.jpg',
+                    fileName: 'bg.jpg'
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
