@@ -1,0 +1,31 @@
+<!-- 5.1.10v-pre -->
+
+<!-- v-pre指令不需要表达式，用于跳过这个元素及其所有子元素的编译。v-pre指令可以用来
+显示原始Mustache标签。对于大量没有指令的节点使用v-pre指令可以加快编译速度。 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5.1.10v-pre</title>
+</head>
+<body>
+    <div id="app">
+        <h1 v-pre>{{ message }}</h1>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    message: 'Vue.js万税',
+                }
+            }
+        }).mount('#app');
+    </script>
+
+    <!-- 渲染结果： {{ message }} -->
+</body>
+</html>

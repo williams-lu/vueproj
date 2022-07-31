@@ -1,0 +1,45 @@
+<!-- 5.1.11v-cloak -->
+
+<!-- v-cloak指令也不需要表达式，这个指令保留在元素上直到关联的组件实例编译结束，
+编译结束后该指令被移除。当和CSS规则（如[v-cloak]{ display: none })一起使用
+时，这个指令可以隐藏未编译的Mustache标签直到组件实例准备完毕。 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5.1.11v-cloak</title>
+    <style>
+        [v-cloak] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1 v-cloak>{{ message }}</h1>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    message: 'Vue.js万税',
+                }
+            }
+        }).mount('#app');
+    </script>
+
+    <!-- 浏览器在加载页面时，如果网速较慢或者页面较大，那么浏览器在构造完DOM树后
+    会在页面中显示{{ message }}字样，知道Vue的JS文件加载完毕，组件实例创建、模板
+    编译后，{{ message }}才会被替换成数据对象中的内容。在这个过程中，页面时会有
+    闪烁的，这给用户的体验很不好。如果加上一项CSS规则：[v-cloak]{ display: none },
+    配合v-cloak指令一起使用，就可以解决这个问题。 -->
+
+    <!-- 在使用Vue.js独立版本的页面开发中，使用v-cloak解决初始化慢所导致的页面闪烁
+    是非常有效的。但是在较大的项目中，由于都是采用模块化的开发，项目的主页面只有一个
+    空的div元素，剩下的都是由路由去挂载不同的组件来完成的，也就没必要使用v-cloak指令了。 -->
+</body>
+</html>
