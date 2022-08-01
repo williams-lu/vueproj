@@ -1,0 +1,61 @@
+<!-- 5.2.2v-focus -->
+
+<!-- 我们希望在绑定元素被挂载到DOM时就自动获得焦点，那么就可以在mounted钩子函数中编写自动聚焦的代码 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5.2.2v-focus</title>
+</head>
+<body>
+    <div id="app">
+        <input v-focus>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({});
+        // 注册一个全局自定义指令
+        app.directive('focus', {
+            // 当绑定元素被挂载到DOM中时
+            mounted(el) {
+                // 聚焦元素
+                el.focus()
+            }
+        });
+        app.mounted('#app');
+    </script>
+
+    <!-- 指令的钩子函数可以带一些参数，例如mounted函数的el参数，具体如下列出
+    （1）el: 指令所绑定的元素，可以用来直接操作DOM。
+    （2）binding: 一个对象，包含以下属性。
+        1）instance: 使用指令的组件的实例。
+        2）value: 传到指令的值。例如在v-my-directive="1+1"中，value的值为2。
+        3）oldValue: 前一个值，仅在beforeUpdate和updated钩子中可用。无论值是否改变都可以用。
+        4）arg: 传给指令的参数，可选。例如在v-my-directive.foo.bar中，arg的值为“foo”。
+        5) modifiers: 一个包含修饰符的对象。例如，在v-my-directive.foo.bar中，modifiers对象的值为{ foo: true, bar:true }。
+        6）dir: 注册指令时作为参数传递的对象。如下面注册指令的代码：
+            ```
+            app.directive('focus', {
+                mounted(el) {
+                    el.focus()
+                }
+            })
+            ```
+        
+            dir指代对象
+            {
+                mounted(el) {
+                    el.focus()
+                }
+            }
+        
+    （3）vnode： Vue编译生成的虚拟节点。
+    （4）oldVnode： 上一个虚拟节点，仅在beforeUpdated和updated钩子中可用。
+
+    注意：除了el参数外，其他参数都应该是只读的，切勿进行修改。
+    -->
+</body>
+</html>

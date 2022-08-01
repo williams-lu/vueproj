@@ -1,0 +1,41 @@
+<!-- 5.2.2HookFunction -->
+
+<!-- 自定义指令，在其钩子函数中将各个参数输出。 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5.2.2HookFunction</title>
+</head>
+<body>
+    <div id="app">
+        <p v-demo:foo.a.b="message"></p>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    message: 'Vue无难事'
+                }
+            }
+        });
+
+        app.directive('demo', {
+            mounted( el, binding, vnode) {
+                let s = JSON.stringify
+                el.innerHTML = 'instance:' + s(binding.instance) + '<br>' +
+                'value: ' + s(binding.value) + '<br>' +
+                'argument: ' + s(binding.arg) + '<br>' +
+                'modifiers: ' + s(binding.modifiers) + '<br>' +
+                'vnode keys: ' + Object.keys(vnode).join(', ')
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
