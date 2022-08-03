@@ -1,0 +1,45 @@
+<!-- 5.3.2使用自定义指令实现随机背景色 -->
+
+<!-- 有时候会使用一幅图片作为网页中某个元素的背景图，当网络状况不好时，或者图片本身较大时，图片的加载会比较慢，
+    在这种情况下，可以先在该元素的区域用随机的背景色填充，等图片加载完成后，再把元素的背景替换为图片。 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+    <title>5.3.2使用自定义指令实现随机背景色</title>
+    
+    <style>
+        div {
+            width: 567px;
+            height: 567px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div v-img="'image/bg.jpg'"></div>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({});
+        
+        vm.directive('img', {
+            mounted: function(el, binding) {
+                let color = Math.floor(Math.random() * 1000000);
+                el.style.backgroudColor = '#' + color;
+                let img = new Image();
+                img.src = binding.value;
+                img.onload = function() {
+                    el.style.backgroudImage='url('+ binding.value + ')';
+                }
+            }
+        });
+
+        vm.mount('#app');
+    </script>
+</body>
+</html>
