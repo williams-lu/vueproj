@@ -1,0 +1,42 @@
+<!-- 7.1 watch -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7.1 监视器</title>
+</head>
+<body>
+    <div id="app">
+        千米：<input type="text" v-model="kilometers">
+        米：<input type="text" v-model="meters">
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    kilometers: 0,
+                    meters: 0,
+                }
+            },
+
+            watch: {
+                kilometers(val) {
+                    this.meters = val * 1000;
+                },
+                // 监听器函数也可以接收两个参数，val是当前值，oldVal是改变前的值
+                meters(val, oldVal) {
+                    this.kilometers = val / 1000;
+                }
+            }
+        }).mount('#app');
+    </script>
+
+    <!-- 当其中一个数据属性的值发生改变时，对应的监听器就会被调用，经过计算得到另一个
+    属性的值 -->
+</body>
+</html>

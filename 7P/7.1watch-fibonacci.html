@@ -1,0 +1,44 @@
+<!-- 7.1 斐波那契数列计算例子 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7.1 斐波那契数列计算例子</title>
+</head>
+<body>
+    <div id="app">
+        请输入要计算斐波那契数列的第几个数：
+        <input type="text" v-model="num">
+        <p v-show="result">{{ result }}</p>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    num: 0,
+                    result: '',
+                }
+            },
+
+            watch: {
+                num(val) {
+                    this.result = "请稍后...";
+                    if(val > 0) {
+                        const worker = new Worker("fibonacci.js");
+                        worker.onmessage = (event) => this.result = event.data;
+                        worker.postMessage(val);
+                    }
+                    else {
+                        this.result = '';
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
