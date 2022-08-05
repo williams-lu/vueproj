@@ -7,20 +7,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>5.3.2使用自定义指令实现随机背景色</title>
     
     <style>
         div {
-            width: 567px;
-            height: 567px;
+            width: 800px;
+            height: 533px;
         }
     </style>
 </head>
 <body>
     <div id="app">
-        <div v-img="'image/bg.jpg'"></div>
+        <div v-img="'images/bg.jpg'"></div>
     </div>
 
     <script src="https://unpkg.com/vue@next"></script>
@@ -29,16 +29,15 @@
         
         vm.directive('img', {
             mounted: function(el, binding) {
-                let color = Math.floor(Math.random() * 1000000);
-                el.style.backgroudColor = '#' + color;
+                let color = Math.floor(Math.random() * 100);
+                el.style.backgroundColor = '#' + color;
                 let img = new Image();
                 img.src = binding.value;
                 img.onload = function() {
-                    el.style.backgroudImage='url('+ binding.value + ')';
+                    el.style.backgroundImage='url('+ binding.value +')';
                 }
             }
         });
-
         vm.mount('#app');
     </script>
 </body>

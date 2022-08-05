@@ -1,0 +1,50 @@
+<!-- 6.1ComputedPropertiesSetter -->
+
+<!-- 计算属性默认只有getter，因此是不能直接修改计算属性的，如果需要，则可以提供一个setter。 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>6.1ComputedPropertiesSetter</title>
+</head>
+<body>
+    <div id="app">
+        <p>First name: <input type="text" v-model="firstName"></p>
+        <p>Last name: <input type="text" v-model="lastName"></p>
+        <p>{{ fullName }}</p>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    firstName: 'Smith',
+                    lastName: 'Will',
+                }
+            },
+            
+            computed: {
+                fullName: {
+                    // getter
+                    get() {
+                        return this.firstName + ' ' + this.lastName
+                    },
+                    // setter
+                    set(newValue) {
+                        let names = newValue.split('')
+                        this.firstName = names[0]
+                        this.lastName = names[names.length - 1]
+                    }
+                }
+            },
+        }).mount('#app');
+
+        // 任意修改firstName或lastName的值，fullName的值都会自动更新，这是调用它的
+        // getter()函数实现的。在浏览器的Console窗口中输入vm.fullName="况天佑"，可以
+        // 可以看到fistName和lastName的值都会变化
+    </script>
+</body>
+</html>

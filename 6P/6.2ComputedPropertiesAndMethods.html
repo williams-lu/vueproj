@@ -1,0 +1,56 @@
+<!-- 6.2ComputedPropertiesAndMethods -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>6.2ComputedPropertiesAndMethods</title>
+</head>
+<body>
+    <div id="app">
+        <p>原始字符串：{{ message }}</p>
+        <p>计算后的反转字符串: {{ reversedMessage }}</p>
+        <p>方法调用后的反转字符串：{{ reversedMessage2() }}</p>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    message: 'Hello World! Vue.js!咔咔咔!',
+                }
+            },
+
+            computed: {
+                // 计算属性的getter
+                reversedMessage: function() {
+                    alert("计算机属性");
+                    console.log("计算属性");
+                    return this.message.split('').reverse().join('');
+                }
+            },
+
+            methods: {
+                reversedMessage2: function() {
+                    alert("方法");
+                    console.log("方法");
+                    return this.message.split('').reverse().join('');
+                }
+            },
+        }).mount('#app');
+
+        let msg = vm.reversedMessages;
+        msg = vm.reversedMessage2();
+    </script>
+
+    <!-- 在计算属性reversedMessages的getter()函数和reversedMessages2()方法中调用alert()
+    语句显示一个消息框，在根组件实例构建后，分别访问vm.reversedMessages计算属性和调用vm.
+    reversedMessages2()方法。
+    使用浏览器打开页面，可以依次看到“计算属性”“方法”“方法”共3个消息框，前2个消息框是模板
+    中的Mustache标签被替换时显示的，可以看到最后对vm.reversedMessages计算属性的访问并
+    没有弹出消息框，这时因为它所依赖的message属性并未发生改变。 -->
+</body>
+</html>

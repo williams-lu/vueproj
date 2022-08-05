@@ -1,0 +1,33 @@
+<!-- 6.2 method -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>6.2 method</title>
+</head>
+<body>
+    <div id="app">
+        <p>原始字符串： {{ message }}</p>
+        <p>方法调用后的反转字符串：{{ reversedMessage() }}</p>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    message: 'Hello, Vue.js哈哈'
+                }
+            },  
+            methods: {
+                reversedMessage() {
+                    return this.message.split('').reverse().join('');
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

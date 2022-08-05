@@ -1,0 +1,37 @@
+<!-- 6.1 计算属性的定义 -->
+<!-- 6.1 ComputedProperties -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>6.1 ComputedProperties</title>
+</head>
+<body>
+    <div id="app">
+        <p>原始字符串： {{ message }}</p>
+        <p>计算后的反转字符串： {{ reversedMessage }}</p>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    message: 'Hello, Vue.js!'
+                }
+            },
+            computed: {
+                // 计算属性的getter
+                reversedMessage() {
+                    return this.message.split('').reverse().join('');
+                }
+            }
+        }).mount('#app');
+    </script>
+    <!-- 当message属性的值改变时，reversedMessage的值也会自动更新，并且会自动同步更新DOM的部分。
+    在浏览器的Console窗口中修改vm.message的值，可以发现reversedMessage的值也会改变。 -->
+</body>
+</html>
