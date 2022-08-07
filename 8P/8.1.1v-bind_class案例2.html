@@ -1,0 +1,42 @@
+<!-- 8.1.1对象语法 -->
+
+<!-- 8.1.1v-bind_class案例2 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8.1.1v-bind_class案例2</title>
+    <style>
+        .static {
+            border: solid 2px black;
+        }
+        .active {
+            width: 100px;
+            height: 100px;
+            background: green;
+        }
+        .text-danger {
+            background: red;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+            <div class="static" v-bind:class="{ active: isActive, 'text-danger': hasError }"></div>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    isActive: true,
+                    hasError: false,
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

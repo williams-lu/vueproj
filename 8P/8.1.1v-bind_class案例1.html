@@ -1,0 +1,35 @@
+<!-- 8.1.1对象语法 -->
+
+<!-- 8.1.1v-bind_class案例1 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8.1.1对象语法</title>
+    <style>
+        .active {
+            width: 100px;
+            height: 100px;
+            background: green;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div v-bind:class="{ active: isActive }"></div>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    isActive: true
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

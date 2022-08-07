@@ -39,4 +39,102 @@ worker.onmessage = function(event) { this.result = event.data };
 >```
 >解决办法就是将本例部署到本地的一个Web服务器中访问，如Tomcat或nginx等
 
+## 7.2 监听器的更多形式
 
+监听器在定义时，除了直接写一个函数外，还可以接一个方法名
+
+案例 7.2监听器接方法名.html
+
+监听器还可以监听一个对象的属性变化。
+
+案例 7.2监听器监听对象.html
+
+要注意在监听对象属性改变时，使用了两个新的选项：handler和deep,前者用于定义当数据属性变化时调用的监听器函数，后者主要在监听对象属性变化时使用，如果该选项的值为true,表示无论该对象的属性在对象中的层级有多深，只要该属性的值发生变化，都会被检测到。
+
+监听器函数在初始渲染时并不会被调用，只有在后续监听的属性发生变化时才会被调用；如果要让监听器函数在监听开始后立即执行，可以使用immediate选项，将其值设置为true。例如：
+```
+watch: {
+    person: {
+        handler(val, odlVal) {
+            if(this.age >= 18)
+                this.info = '已成年';
+            else
+                this.info = '未成年';
+        },
+        deep: true,
+        immediate: true,
+    }
+}
+```
+当页面加载后，就会立即显示“未成年”。
+
+如果仅仅是监听对象的一个属性变化，且变化也不影响对象的其他属性，那么就没必要这样了，直接监听对象属性即可。
+```
+watch: {
+    'person.age': function(val, oldVal) {
+        ...
+    }
+}
+```
+> **注意：**
+> 监听对象属性时，因为有特殊字符点号(.)，因此需要使用一对单引号('')或双引号("")将其包裹起来
+
+## 7.3 实例方法$watch
+
+除了在watch选项中定义监听属性外，还可以使用组件实例的$watch方法观察组件实例上的响应式属性或计算属性的更改。对于顶层数据属性、prop和计算属性，只能以字符串的形式传递他们的名字。
+```
+vm.$watch('kilometers', (newValue, oldValue) => {
+    // 这个回调将在 vm.kilometers 改变后调用
+    document.getElementById("info").innerHTML = "修改前值为：” + oldValue + ",修改后值为：" + newValue;
+})
+```
+
+对于更复杂的表达式或嵌套属性，则需要使用函数形式。
+```
+const app = Vue.createApp({
+    data() {
+        return {
+            a: 1,
+            b: 2,
+            c: {
+                d: 3,
+                e: 4,
+            }
+        }
+    },
+
+    created() {
+        //  顶层属性名
+        this.$watch('a', (newVal, oldVal) => {
+            // do something
+        })
+
+        // 用于监听单个嵌套属性的函数
+        this.$watch(
+            () => this.c.d,
+            (newVal, oldVal) => {
+                // do something
+            }
+        )
+
+        // 用于监听复杂表达式函数
+        this.$watch(
+            //每次表达式“this.a + this.b"产生不同的结果时都会调用
+            //处理程序。就好像我们在观察一个计算属性而没有定义计算属性本身
+            () => this.a + this.b,
+            (newVal, oldVal) => {
+                // do something
+            }
+        )
+    }
+})
+```
+
+$watch方法还可以接受一个可选的选项对象作为其第3个参数。例如，要监听对象内部的嵌套属性的变化时，可以在选项参数中传入deep:true。代码：
+```
+vm.$watch('person', callback, {
+    deep: true
+})
+
+vm.person.age = 20
+```

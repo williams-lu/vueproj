@@ -1,0 +1,45 @@
+<!-- 7.3实例方法$watch -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>7.3实例方法$watch</title>
+</head>
+<body>
+    <div id="app">
+        年龄： <input type="text" v-model="person.age">
+        <p v-if="info">{{ info }}</p>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    person:{
+                        name: 'lisi',
+                        age: 0,
+                    },
+                    info: '',
+                }
+            },
+
+            watch: {
+                // 该回调会在person对象的属性改变时被调用，无论该属性被嵌套多深
+                person: {
+                    handler(val, odlVal) {
+                        if(this.age >= 18)
+                            this.info = '已成年';
+                        else
+                            this.info = '未成年';
+                    },
+                    deep: true
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
