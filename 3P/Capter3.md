@@ -440,3 +440,517 @@ let sn2 = Symbol("sn");
 console.log(Symbol.keyFor(sn2));      //undefined
 ```
 全局Symbol注册表中并不存在sn2这个Symbol，自然不存在与之相关的key，因此返回undefined。
+
+## 3.10 类
+
+大多数面向对象的编程语言支持类和类继承的特性，而JavaScript不支持这种特性，只能通过其他方式模拟类的定义和类的继承。ES6引入了class(类)的概念，新的class写法让对象原型的写法更加清晰，也更像传统的面向对象变成语言的写法
+
+### 3.10.1 类的定义
+
+在ES5及早期版本中国，没有类的概念，可以通过构造函数和原型混合使用的方式模拟定义一个类。
+
+示例1：
+```
+function Car(sColor, iDoors)
+{
+    this.color = sColor;
+    this.doors = iDoors;
+}
+
+Car.prototype.showColor=function() {
+    console.log(this.color);
+};
+
+var oCar = new Car("red", 4);
+oCar.showColor();
+```
+
+ES6引入了class关键字，使类的定义更接近Java、C++等面向对象语言中的写法。使用ES6中的类声明语法改写上述代码。
+示例2：
+```
+class Car {
+    // 等价于Car构造函数
+    constructor(sColor, iDoors) {
+        this.color = sColor;
+        this.doors = iDoors;
+    }
+    // 等价于Car.prototype.showColor
+    showColor() {
+        console.log(this.color);
+    }
+}
+
+let oCar = new Car("red", 4);
+oCar.showColor();
+```
+
+在类声明语法中，使用特殊的constructor方法名定义构造函数，且由于这种类使用简写语法定义方法，因此不需要添加function关键字。
+
+自由属性时对象实例中的属性，不会出现在原型上，如本例中的color和doors。自有属性只能在类的构造函数（即constructor方法）或方法中创建，一般建议在构造函数中创建所有的自由属性，从而只通过一处就可以控制类中的自有属性。本例中的showColor()方法实际上是Car.prototype的一个方法。
+
+类也可以使用表达式的形式定义。
+实例3：
+```
+let Car = class {
+    // 等价于Car构造函数
+    constructor(sColor, iDoors) {
+        this.color = sColor;
+        this.doors = iDoors;
+    }
+    // 等价于Car.prototype.showColor
+    showColor() {
+        console.log(this.color);
+    }
+}
+
+let oCar = new Car("red", 4);
+oCar.showColor();
+```
+使用类的表达式，可以实现立即调用类构造函数从而创建一个类的单例对象。使用new调用类表达式，紧接着通过一对圆括号调用这个表达式。
+```
+let Car = new class {
+    // 等价于Car构造函数
+    constructor(sColor, iDoors) {
+        this.color = sColor;
+        this.doors = iDoors;
+    }
+    // 等价于Car.prototype.showColor
+    showColor() {
+        console.log(this.color);
+    }
+}("red", 4)
+
+car.showColor();
+```
+上述代码创建了一个匿名类表达式，然后立即执行。按照这种模式可以其使用类语法创建单例，并且不会在作用域中暴露类的引用。
+
+#### 3.10.2 访问器属性
+
+访问器属性是通过关键字get和set创建的，语法为关键字get或set后跟一个空格和相应的标识符，实际上是为了某个属性定义取值和设值函数，在使用时以属性访问的方式使用。与自由属性不同的是，访问器属性是在原型上创建的。
+
+示例1：
+```
+class Car {
+    constructor(sName, iDoors) {
+        this._name = sName;
+        this.doors = iDoors;
+    }
+    // 只读属性
+    get desc() {
+        return `${this.name} is worth having.`;
+    }
+
+    get name() {
+        return this._name;
+    }
+
+    set name(value) {
+        this._name = value;
+    }
+}
+
+let car = new Car("Benz", 4);
+console.log(car.name);      //Benz
+console.log(car.desc);      //Benz is worth having
+car.name = "Ferrari";
+console.log(car.name);      //Ferrari
+car.prototype.desc="very googd";  //TypeError:Cannot set property'desc'of undifined
+```
+在构造函数中定义了一个"_name"属性，前面的下划线是一种常用的约定记号，用于表示只能通过对象方法访问的属性。当访问属性name时，实际上是调用它的取值方法；当给属性name赋值时，实际上是调用它的设值方法。因为是方法实现，所以定义访问器属性时，可以添加一些访问控制或额外的代码逻辑。
+
+如果需要只读的属性，那么只提供get()方法即可，如本例中的desc属性；同理，如需要只写属性，只提供set()方法即可。
+
+### 3.10.3 静态方法
+
+ES6引入了关键字static，用于定义静态方法。类中所有的方法和访问器属性都可以使用static关键字定义。
+
+示例1：
+```
+class Car {
+    constructor(sName, iDoors) {
+        this._name = sName;
+        this.doors = iDoors;
+    }
+
+    showName() {
+        console.log(this.name);
+    }
+
+    static createDefault() {
+        return new Car("Audi", 4);
+    }
+}
+
+let car = Car.createDefault();
+car.showName();      // Audi
+car.createDefault();   //TypeError: car.createDefault is not a function
+```
+使用static关键字定义的静态方法，只能通过类名访问，不能通过实例访问。此外，ES6并没有提供静态属性，不能在实例属性前面添加static关键字。
+
+### 3.10.4 类的继承
+
+ES6提供了extends关键字，可以实现类的继承。
+
+示例1：
+```
+class Person {
+    constructor(name) {
+        this.name = name;
+    }
+
+    work() {
+        console.log("working...");
+    }
+}
+
+class Student extends Person {
+    constructor(name, no) {
+        super(name);    // 调用父类的constructor(name)
+        this.no = no;
+    }
+}
+
+let stu = new Student("zhangsan", 1);
+stu.work();   // working...
+```
+Student类通过使用关键字extents继承自Person类，Student类称为派生类。在Student的构造函数中，通过super()函数调用Person的构造函数并传入相应参数。需注意，如果在派生类中定义了构造函数，则必须调用super()函数，并且一定要在访问super()函数并传入所有参数。例如下面的示例：
+```
+class Person {
+    constructor(name) {
+        this.name = name;
+    }
+
+    work() {
+        console.log("working...");
+    }
+} 
+
+class Teacher extends Person {
+    //没有构造函数
+}
+//等价于
+<!-- 
+class Teacher extends Person {
+    constructor(...args)  {
+        super(...args);
+    }
+}
+ -->
+
+let teacher = new Teacher("lisi");
+teacher.work();   // working...
+```
+>定义了Teacher类，从Person类继承，在类声明中，没有定义函数
+
+在派生类中，可以重写基类中的方法，覆盖基类中的同名方法。
+
+```
+class Person {
+    constructor(name) {
+        this.name = name;
+    }
+
+    work() {
+        console.log("working...");
+    }
+}
+
+class Student extends Person {
+    constructor(name, no) {
+        super(name);    // 调用父类的constructor(name)
+        this.no = no;
+    }
+    //覆盖Person.prototype.work()方法
+    work() {
+        console.log("studying...");
+    }
+}
+
+let stu = new Student("zhangsan", 1);
+stu.work();    //studying...
+```
+在Student的work()方法中需要调用基类的work()方法，可以使用super关键字调用。
+```
+class Person {
+    ...
+}
+
+class Student extends Person {
+    ...
+    work() {
+        super.work();
+        console.log("studying...");
+    }
+}
+
+let stu = new Student("zhangsan", 1);
+stu.work();    // working...
+               //studying...
+```
+
+## 3.11 模块
+
+ES6在语言标准层面上实现了模块功能。
+
+一个模块通常是一个独立js文件，该文件内部定义的变量和函数除非被导出，否则不能被外部访问。
+
+使用export关键字放置在需要暴露给其他模块使用的变量、函数或类声明前面，以将它们从模块中导出。
+
+#### 导出
+
+Modules.js示例：
+```
+//导出数据
+export var color = "red";
+export let name = "module";
+export const sizeOfPage = 10;
+
+//导出函数
+export function sum(a, b) {
+    return a + b;
+}
+
+// 将在模块末尾进行导出
+function subtract(a, b) {
+    return a - b;
+}
+
+// 将在模块末尾进行导出
+function multiply(a, b) {
+    return a * b;
+}
+
+// 将在模块末尾进行导出
+function divide(a, b) {
+    if(b !== 0)
+        return a / b;
+}
+
+//导出类
+export class Car {
+    constructor(sColor, iDoors) {
+        this.color = sColor;
+        this.doors = iDoors;
+    }
+    showColor() {
+        console.log(this.color);
+    }
+}
+
+//模块私有的变量
+var count = 0;
+//模块私有的函数
+function changeCount() {
+    count++;
+}
+
+//导出multiply函数
+export {multiply};
+// subtract是本地名称，sub是导出时使用的名称
+export {subtract as sub}
+//导出模块默认值
+export default divide;
+```
+>**说明**
+
+(1)导出时可以分别对变量、函数和类进行导出，也可以将导出语句集中书写在模块的末尾，当导出内容较多时，采用后者会更加清晰。
+
+(2)没有添加export关键字而定义的变量、函数和类在模块外部是不允许被访问的。
+
+(3)导出的函数和类声明都需要一个名称。如果要用一个不同的名称导出变量、函数和类，可以使用as关键字指定变量、函数和类在模块外应该按照什么样的名字来使用。
+
+(4)一个模块可以导出且只能导出一个默认值，默认值是通过使用default关键字指定的单个变量、函数或类。非默认值的导出，需要使用一对花括号包裹名称，而默认值的导出则不需要。
+
+(5)默认值的导出还可以采用下面两种语法形式。
+```
+// 第二种语法形式使用default关键字导出一个函数作为模块的默认值
+// 因为导出的函数被模块所代表，所以它不需要一个名称
+export default function(a, b) {
+    if(b !== 0)
+        return a / b;
+}
+//-------------------------------------//
+function divide(a, b){
+    if(b !== 0)
+        return a / b;
+}
+//第三种语法形式
+export { divide as default }
+```
+
+如果想在一条导出语句指定多个导出（包括默认导出），那么就需要用到第三种语法形式。下面将Module.js中模块尾部的导出合并为一条导出语句。
+```
+export {multiply, subtract as sub, divide as default};
+```
+
+#### 导入
+
+导入是使用import关键字引入其他模块导出的功能。import语句由两部分组成：要导入的标识符和标识符应当从哪个模块导入。
+
+index.js示例
+```
+//导入模块默认值
+import divide from "./Modules.js";
+//导入多个绑定
+import { color, name, sizeOfPage } from "./Modules.js";
+//导入单个绑定
+import {multiply} from "./Modules.js";
+//因Modules模块中导出subtract()函数时使用了名称sub，这里导入也要用该名称
+import {sub} from "./Modules.js"
+//导入时重命名导入的函数
+import {sum as add} from "./Modules.js";
+//导入类
+import {Car} from "./Modules.js";
+//导入整个模块
+import * as example from "./Modules.js";
+
+console.log(color);     //red
+console.log(name);    //module
+console.log(sizeOfPage);    //10
+//只能用add而不能用sum
+console.log(add(6, 2));    //8
+console.log(sub(6, 2));    //4
+console.log(multiply(6, 2)); //12
+console.log(divide(6, 2));   //3
+let car = new Car("black", 4);
+car.showColor();             //black
+console.log(example.name);    //module
+//注意这里是sum，而不是add
+console.log(example.sum(6, 2));    //8
+//count是Modules模块私有的变量，在外部不能访问
+console.log(example.count);         //undefined
+//changeCount()函数是Modules模块私有的函数，在外部不能访问
+vconsole.log(example.changeCount());  //TypeError: example.changeCount is not a function.
+```
+>**说明**
+
+(1)导入模块时，模块文件的位置可以使用相对路径，也可以使用绝对路径。使用相对路径时，对于同一个目录下的文件，不能使用Modules.js引入，而要使用"./Modules.js"。
+
+(2)导入时，可以导入单个绑定，也可以同时导入多个绑定。导入时，也可以使用as关键字对导入的绑定重命名。
+
+(3)对于模块非默认值的导入，需要使用一对花括号包裹名称，而默认值的导入则不需要。
+
+(4)可以导入整个模块作为一个单一对象，然后所有的导出将作为该对象的属性使用。
+
+(5)多个import语句引用同一个模块，该模块也执行一次。被导入的模块代码执行后，实例化后的模块被保存在内存中，只要另一个import语句引用它就可以重复使用。
+
+>**提示：**
+>export和import语句必须在其他语句或函数之外使用，换句话说，import和export语句只能在模块的顶层使用。
+
+## 3.12 Promise
+
+JavaScript引擎是基于单线程时间循环的概念构建的，它采用任务队列的方式，将要执行的代码块放到队列中，当JavaScript引擎中的一段代码结束，事件循环会指定队列中的下一个任务执行。事件循环是JS引擎中的一段程序，负责监控代码执行并管理任务队列。
+
+JS执行异步调用的传统方式是时间和回调函数，随着应用的复杂化，事件和回调函数无法完全满足开发者需求，因此ES6给出Promise用作异步编程的解决方案。
+
+### 3.12.1 基本用法
+
+一个Promise可以通过Promise构造函数创建，这个构造函数只接受一个参数：包含初始化Promise代码的执行器(executor)函数，在该函数内包含需要异步执行的代码。执行器函数接受两个参数，分别是resolve()函数和reject()函数，这个两个函数由JavaScript引擎提供，不需要用户自己编写。异步操作结束成功时调用resolve()函数，失败时调用reject()函数。
+
+示例1：使用Promise构造函数创建Promise
+```
+const Promise = new Promise(function(resolve, reject) {
+    //开启异步操作
+    setTimeout(function() {
+        try {
+            let c = 6 / 2;
+            //执行成功时，调用resolve()函数
+            resolve(c);
+        }catch(ex) {
+            //执行失败时，调用reject()函数
+            reject(ex);
+        }
+    }, 1000)
+});
+```
+在执行器函数内包含了异步调用，在1s后执行两个数的除法运算，如果成功，则用相除的结果作为参数调用resolve()函数，失败则调用reject()函数。
+
+每个Promise都会经历一个短暂的生命周期：先是处于执行中(pending)的状态，此时操作尚未完成，所以它也是未处理的(unsettled),一旦异步操作执行结束，Promise则变为已处理(settled)状态。操作结束后，根据异步操作执行成功与否，可以进入以下两个状态。
+
++ (1)fulfilled: Promise异步操作成功完成。
++ (2)rejected: 由于程序错误或其他一些原因，Promise异步操作未能成功。
+
+一旦Promise状态改变，就不会再变，任何时候都可以得到这个结果。Promise对象的状态改变，只能两种可能： 从pending变为fulfilled,或者从pending变为rejected。
+
+如何根据不同的Promise状态做相应处理呢？
+
+Promise对象有一个then()方法，它接受两个参数：第一个是当Promise的状态变为fulfilled时要调用的函数，与异步操作相关的附加数据通过调用resolve()函数传递给这个完成函数；第二个是当Promise的状态变为rejected时要调用的函数，所有与失败相关的附加数据通过调用reject()函数传递给这个拒绝函数。
+
+在示例1的基础上添加Promise的then()方法的调用。
+
+示例2：
+```
+promise.then(function(value) {
+    //完成
+    console.log(value);     //3
+}, function(err) {
+    //拒绝
+    console.error(err.message);
+})
+```
+then()方法的两个参数都是可选的。例如，只在执行失败后进行处理，可以给then()方法的第一个参数传递null。
+```
+promise.then(null, function(err) {
+    //拒绝
+    console.error(err.message);
+})
+```
+Promise对象还有一个catch()方法，用于执行失败后进行处理，等价于上述只给then()方法传入拒绝处理函数的代码。
+```
+promise.catch(function(err) {
+    console.error(err.message);
+})
+```
+通常是将then()方法和catch()方法一起使用来对异步操作的结果进行处理，这样能更清楚地指明操作结果是成功还是失败。
+```
+promise.then(function(value) {
+    //完成
+    console.log(value);    //3
+}).catch(function(err) {
+    //拒绝
+    console.error(err.message);
+});
+```
+修改示例1,将除数修改为0，在Node.js中运行代码，结果未Infinity。
+
+上述代码使用箭头函数会更加简洁。
+```
+promise.then(value => console.log(value))
+       .catch(err => console.error(err.message));
+```
+>**提示：**
+>如果调用resolve()函数或reject()函数时带有参数，那么它们的参数会被传给then()或catch()方法的回调函数。
+
+Promise支持方法链的调用形式，如上述代码所示。每次调用then()或catch()方法时实际上会创建并返回另一个Promise，因此可以将Promise串联调用。在串联调用时，只有在前一个Promise完成或被拒绝时，第二个才会被调用。
+```
+const promise = new Promise((resolve, reject) => {
+    //调用setTimeout模拟异步操作
+    setTimeout( () => {
+        let intArray = new Array(20);
+        for(let i = 0; i < 20; i++) {
+            inArray[i] = parseInt(Math.random() * 20, 10);
+        }
+        //成功后调用resolve
+        resolve(intArray);
+    }, 1000);
+    //该代码会立即执行
+    console.log("开始生成一个随机数的数组")
+});
+
+promise.then(value => {
+    value.sort((a, b) => a-b);
+    return value;
+}).then(value => console.log(value));
+```
+>**说明：**
+(1)Promise的执行器函数内的代码会立即执行，因此无论setTimeout()指定的回调函数执行成功与否，console.log("开始生成一个随机数的数组")语句都会执行。
+
+(2)在20个随机数生成完毕后，调用resolve(intArray)函数，因而then()方法的完成处理函数被调用，对数组进行排序，之后返回value；接着下一个then()方法的完成处理函数开始调用，输出排序后的数组。
+
+(3)Promise链式调用时，有一个重要特性就是可以为后续的Promise传递数据，只需要在完成处理函数中指定一个返回值(如上述代码中的return value)，就可以沿着Promise链继续传递数据。
+
+结果输出：
+```
+开始生成一个随机数的数组
+[0,1,2,2,4,4,4,5,6,7,7,9,9,10,12,12,14,15,15,16] 
+```
