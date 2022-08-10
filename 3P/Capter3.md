@@ -57,6 +57,227 @@ greeting被定义为一个全局变量，并立即成为window对象的属性。
 ```
 综上所述，如不想全局对象window创建属性，或者为了避免覆盖window对象的属性，则应该使用let和const声明变量和常量。
 
+## 3.5 展开运算符
+
+展开运算符在语法上与rest参数相似，也是3个点，它可以将一个数组转换为各个独立的参数，也可用于取出对象的所有可遍历属性，而rest参数是指定多个独立的参数，并通过整合后的数组来访问。
+```
+function sum(a, b, c) {
+    return a + b + c;
+}
+
+let arr = [1, 2, 3];
+sum(...arr);
+```
+上述代码使用展开运算符提取数组arr中的各个值并传入sum()函数中。
+
+展开运算符可以用来复制数组，示例：
+```
+let arr1 = [1, 2, 3];
+let arr2 = arr1;     // arr2与arr1是同一个数组对象
+let arr3 = [...arr1];    //arr3与arr1是两个不同的数组对象
+
+arr1[0] = 4;
+console.log(arr2[0]);    //arr2中的元素同时被改变，输出4
+console.log(arr3[0]);    //输出1
+```
+展开运算符还可以用于取出对象的所有可遍历属性，复制到当前对象中。
+```
+let book = {
+    title: "Vue.js从入门到实践",
+    price: 98,
+}
+
+let bookDetail = { ...book, desc: "a fine book" };
+console.log(bookDetail);  //{ title: 'Vue.js从入门到实践', price: 98, desc: "a fine book" }
+```
+
+## 3.6 对象字面量语法扩展
+
+对象字面量（Object Literals）是JS中创建对象的一种非常流行的方法。在ES6中，通过以下几种语法，让对象字面量更加强大、简洁。
+
+### 3.6.1 属性初始值的简写
+
+在ES6通过使用属性初始值的简写语法，可以消除这种属性名称与本地变量之间的重复书写
+
+```
+function createCar(color, doors) {
+    return {
+        //有同名的参数，只写属性即可
+        color,
+        doors,
+    }
+}
+let name = "zhangsan";
+let age = 18;
+//有同名的本地变量，只写属性名即可
+ver person = { name, age };
+```
+对象字面量里只有属性名称时，JS引擎会在可访问作用域中查找与其同名的变量，如果找到，则该变量的值被赋予对象字面量里的同名属性。
+
+### 3.6.2 对象方法的简写语法
+
+ES6也改进了对象字面量定义方法的语法。
+```
+var car = {
+    color: "red",
+    doors: 4,
+    showColor() {
+        console.log(this.color);
+    }
+}
+car.showColor();
+console.log(car.showColor.name);    //showColor
+```
+>**注意：**
+>
+>通过对象方法的简写语法创建的方法有一个name属性，其值为圆括号前面的名称。本例中，car.showColor()方法的name属性值为showColor。
+
+### 3.6.3 可计算的属性名
+
+在JS中，访问对象的属性，可以通过点号(.)或方括号([]),如果属性名包含了特殊字符或中文，或者需要通过计算得到属性名，则只能使用方括号。
+```
+let suffix = "name";
+let person = {};
+person["first name"] = "san";      //属性名有空格
+person["last " + suffix] = "zhang";  //属性名由表达式计算得到
+person.age = 20;         //常规属性名可以直接通过点号访问
+console.log(person);      //{ 'first name': 'san', 'last name': 'zhang', age: 20 }
+```
+ES6中，可以在对象字面量中使用可计算的属性名称。
+```
+let suffix = "name";
+let person = {
+    ["first " + suffix] = "san",
+    ["last " + suffix] = "zhang",
+    age: 20,
+};
+```
+当然，任何可用于对象实例方括号记法的属性名，都可以作为对象字面量中的计算属性名。
+
+## 3.7 解构赋值
+
+JS中，我们经常需要从某个对象或数组中提取特定的数据赋给变量。
+```
+//在真实应用场景中，book对象通常是从服务器端得到的数据
+let book = {
+    title: "Vue.js从入门到精通",
+    isbn: "282828282828282",
+    price: 98,
+    category: {
+        id: 1,
+        name: "web前端",
+    }
+}
+
+//提取对象中的数据赋给变量
+let title = book.title;
+let isbn = book.isbn;
+let price = book.price;
+let category = book.category.name;
+//提取数组中的数据赋值给变量
+let arr = [1, 2, 3];
+let a = arr[0], b = arr[1], c = arr[2];
+```
+### 3.7.1 对象解构
+
+对象解构的语法形式是在一个赋值操作符的左边放置一个对象字面量。
+```
+let book = {
+    title: "Vue.js从入门到精通",
+    isbn: "282828282828282",
+    price: 98,
+}
+
+let { title, isbn, price } = book;
+console.log(title);    //Vue.js从入门到精通
+console.log(isbn);    //282828282828282
+console.log(price);       //98
+```
+>**注意：**
+>
+>如果使用var、let或const声明变量，则必须提供初始化程序，即等号右侧必须提供值。
+
+如果变量之前声明，之后想要用解构语法给变量赋值，那么需要用圆括号包裹整个解构赋值语句。
+```
+let book = {
+    title: "Vue.js从入门到精通",
+    isbn: "282828282828282",
+    price: 98,
+}
+
+let title, isbn, price;
+{ title, isbn, price } = book;    //语法错误
+({ title, isbn, price } = book);   //正确
+```
+JS引擎将一对开放的花括号视为一个代码块，而语法规定代码块语句不允许出现在赋值语句的左侧，添加圆括号后可以将块语句转化为一个表达式，从而实现整个解构赋值的过程。
+
+整个解构赋值表达式的值与表达式右侧（即“=”右侧）的值相等，这样，就可以实现一些有趣操作。给变量赋值的同时向函数传参。
+```
+let book = {
+    title: "Vue.js从入门到精通",
+    isbn: "282828282828282",
+    price: 98,
+}
+
+let title, isbn;
+
+function outputBookInfo(book) {
+    console.log(book);
+}
+// 给title、isbn变量赋值后，因解构表达式的值是“=”右侧的值
+// 所以此处向outputBookInfo() 函数传递的参数是book对象
+outputBookInfo({title, isbn} = book);
+console.log(title);  //Vue.js从入门到精通
+console.log(isbn);    //282828282828282
+```
+如果解构赋值表达式局部变量未定义，可以在定义时设定默认值。
+```
+let book = {
+    title: "Vue.js从入门到精通",
+    isbn: "282828282828282",
+    price: 98,
+}
+let { title, isbn, salesVolume = 0 } = book;
+console.log(title);  //Vue.js从入门到精通
+console.log(isbn);    //282828282828282
+console.log(salesVolume);    //0
+```
+如果book对象中没有salesVolume属性，或者该属性值为undefined时，则使用预设的默认值。
+
+如果希望在使用解构赋值时，使用与对象属性名不同的局部变量名，那么可以采用“属性名：局部变量名”的语法形式
+```
+let book = {
+    title: "Vue.js从入门到精通",
+    isbn: "282828282828282",
+    price: 98,
+}
+
+let { title: bookTitle, isbn: bookIsbn } = book;
+console.log(bookTitle);  //Vue.js从入门到精通
+console.log(bookIsbn);    //282828282828282
+```
+title:bookTitle语法的含义是： 读取名为title的属性并将其值存储到变量bookTitle中。需要注意的是，变量的名称在冒号(:)右边，而左边则是要读取的对象的属性名。
+
+嵌套的对象解构语法提取值
+
+```
+let book = {
+    title: "Vue.js从入门到精通",
+    isbn: "282828282828282",
+    price: 98,
+    category: {
+        id: 1,
+        name: "web前端",
+    }
+}
+// let { category: { name }} = book;  //局部变量名为name
+let { title, isbn, category: { name: category }} = book;
+console.log(title);  //Vue.js从入门到精通
+console.log(isbn);    //282828282828282
+console.log(category);    //web前端
+```
+category: { name: category }语法含义：在找到book对象的category属性后，继续深入下一层（即到category对象中）查找name属性，并将其值赋给category局部变量。要注意代码最后一条语句中的category是{ name: category }中的category。
+
 ## 3.8 箭头函数
 
 ES6允许使用“箭头”(=>)定义函数，箭头函数的语法多变，根据实际的使用场景有多种形式，但都需要由函数参数、箭头和函数体组成。根据JavaScript函数定义的各种不同形式，箭头函数的参数和函数体可以分别采取不同的形式。
