@@ -954,3 +954,265 @@ promise.then(value => {
 开始生成一个随机数的数组
 [0,1,2,2,4,4,4,5,6,7,7,9,9,10,12,12,14,15,15,16] 
 ```
+在完成处理程序或拒绝处理程序中也可能会产生错误，使用Promise链式调用可以很好地捕获错误。
+
+示例：
+```
+const promise = new Promise((resolve, reject) => {
+    resolve("Hello World");
+});
+
+promise.then((value) => {
+    console.log(value);
+    throw new Error("错误");
+}).catch(err => console.error(err.message));
+```
+Node.js运行结果：
+```
+Hello World
+错误
+```
+需要注意，JavaScript中的try/catch代码块不同，如果没有使用catch()方法指定错误处理的回调函数，那么Promise对象抛开的错误不会传递到外层代码，即不会有任何反应。
+
+### 3.12.2 创建已处理的Promise
+
+如果要将一个现有的对象转换为Promise对象，可以调用Promise.resolve()方法，该方法接收一个参数并返回一个完成状态的Promise，之后在返回的Promise对象上调用then()方法来获取值。
+
+示例：
+```
+const promise = Promise.resolve("hello Vue.js");
+promise.then(value => console.log(value));   //hello Vue.js
+```
+
+Promise.resolve()方法的参数分别以下3种情况：
++ (1)如果参数是一个Promise实例，那么将直接返回Promise,不做任何改动。
++ (2)如果参数是一个thenable对象（即具有then()方法的对象），那么会创建一个新的Promise对象，并立即执行thenable对象的then()方法，返回的Promise对象的最终状态由then()方法的执行决定。
+
+示例：
+```
+const thenable = {
+    then(resolve, reject) {
+        resolve("Hello");
+    }
+}
+
+const promise = Promise.resolve(thenable);   //会执行thenable对象的then()方法
+promise.then(value => console.log(value));    //Hello
+```
++ (3)如果参数为空，或者是基本数据类型，或者不带then()对象，那么返回Promise对象状态为fulfilled,并且将参数值传递给对应的then()方法。
+
+通常来讲，如果不知道一个值是否为Promise对象，使用Promise.resolve(value)方法返回一个Promise对象，这样就能将该value以Promise对象形式使用。
+
+Promise.reject(reason)方法也会返回一个新的Promise对象，并将给定的失败信息传递给对应的处理方法，返回的Promise对象状态为rejected。
+
+实例：
+```
+const promise = Promise.reject('fail');
+promise.catch(err => console.log(err)); //fail
+```
+
+### 3.12.3 响应多个Promise
+
+如果需要等待多个异步任务完成后，再执行下一步的操作，那么可以调用Promise.all()方法，该方法可以接受一个参数并返回一个新的Promise对象，参数是一个包含多个Promise的可迭代对象（如数组）。返回的Promise对象在参数给出的所有Promise对象都成功的时候才会触发成功，一旦有任何一个Promise对象失败，则立即触发该Promise对象的失败。这个新的Promise对象在触发成功状态以后，会把所有Promise返回值的数组作为成功回调的返回值，顺序与可迭代对象中的Promise顺序保持一致；如果这个新的Promise对象触发了失败状态，它会把可迭代对象中第一个触发失败的Promise对象的错误信息作为它的失败错误信息。Promise.all()方法通常被用于处理多个Promise对象的状态集合。
+
+示例：
+```
+const promise1 = Promise.resolve(5);
+const promise2 = 10;
+const promise3 = new Promise((resolve, reject) => {
+    setTimeout(resolve, 100, 'Hello');
+});
+const promise4 = new Promise((resolve, reject) => {
+    throw new Error("错误");
+});
+Promise.all([promise1, promise2, promise3]).then(values => {
+    console.log(values);
+});
+Promise.all([promise1, promise2, promise4]).then(values => {
+    console.log(values);
+}).catch(err => console.log(err.message));
+```
+
+如果Promise.all()方法的参数中包含非Promise值，这些值将被忽略，但任然会被放到返回的数组中（如果Promise都完成成功）。
+
+上述结果：
+```
+错误
+[ 5, 10, 'Hello' ]
+```
+ES6还提供了一个Promise.race()方法，同样也是传入多个Promise对象，但与Promise.all()方法的区别是，该方法是只要有任意一个Promise成功或失败，则返回的新的Promise对象就会用这个Promise对象的成功返回值或失败信息作为参数调用对应的回调函数。
+
+示例：
+```
+const promise1 = Promise.resolve(5);
+const promise2 = new Promise((resolve, reject) => {
+    resolve(10);
+});
+const promise3 = new Promise((resolve, reject) => {
+    setTimeout(resolve, 100, 'Hello');
+});
+
+Promise.race([promise1, promise2, promise3]).then(value => {
+    console.log(value);
+});
+```
+运行结果：5
+
+## 3.13 async函数
+
+async函数是在ES2017标准引入的。async函数是使用async关键字声明的函数，async函数时AsyncFunction构造函数的实例。在async函数内部可以使用await关键字，表示紧跟在后面的表达式需要等待结果。async和await关键字可以用一种更简洁的方式写出基于Promise的异步行为，从而无须刻意链式调用Promise。
+
+### 3.13.1 基本用法
+
+async函数会返回一个Promise对象，如果一个async函数的返回值不是Promise，那么它会被隐式地包装到一个Promise中。
+
+示例：
+```
+async function helloAsync() {
+    return "Hello";
+}
+
+<!-- 等价于
+function helloAsync() {
+    return Promise.resolve("Hello");
+}
+ -->
+console.log(helloAsync())  //Promise { 'Hello' }
+
+helloAsync().then(v => {
+    console.log(v);      //Hello
+})
+```
+async函数内部return语句返回的值，会成为then()方法回调函数的参数。
+async函数中可以有await表达式，async函数执行时，如果遇到await，就会先暂停执行，等到触发的异步操作完成后，再恢复async函数的执行并返回解析值。
+
+```
+function asyncOp() {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            console.log("延时任务");
+            resolve();
+        }, 1000)
+    });
+}
+
+async function helloAsync() {
+    await asyncOp();
+    console.log("Hello");
+}
+
+helloAsync();
+```
+如果helloAsync()函数执行时，在await处没有暂停，由于计时器设定的是在1s后才执行传入的匿名函数，那么在Console窗口中应该先看到Hello，然后才是“延时任务”。上述代码结果：
+```
+延时任务
+Hello
+```
+async函数的函数体可以看作是由0个或多个await表达式分隔开来，从第一行代码开始直到第一个await（如果有）都是同步运行得。也就是一个不含await表达式的async函数时会同步运行得。然而，如果函数体有一个await表达式，async函数就一定会异步执行。
+
+在await关键字后面，可以是Promise对象和原始类型的值。如果是原始类型的值，会自动转成立即resolved的Promise对象。
+
+### 3.13.2 await和并行任务执行
+
+在async函数中可以有多个任务，如果多个任务之间并不要求顺序执行，那么可以在await后面接Promise.all()方法并行执行多个任务。
+
+示例：
+```
+const resolveAfter2Seconds = function() {
+    console.log("starting slow promise");
+    return new Promise(resolve => {
+        setTimeout(function() {
+            resolve("slow");
+            console.log("slow promise is done");
+        }, 2000);
+    });
+};
+
+const resolveAfter1Seconds = function() {
+    console.log("starting fast promise");
+    return new Promise(resolve => {
+        setTimeout(function() {
+            resolve("fast");
+            console.log("fast promise is done");
+        }, 1000);
+    });
+};
+
+const parallel = async function() {
+    console.log("使用await Promise.all并行执行任务");
+    //并行启动两个任务，等待两个任务都完成
+    await Promise.all([
+        (async() => console.log(await resolveAfter2Seconds()))(),
+        (async() => console.log(await resolveAfter1Seconds()))(),
+    ]);
+}
+
+parallel();
+```
+上述运行结果：
+```
+使用await Promise.all并行执行任务
+starting slow promise
+starting fast promise
+fast promise is done
+fast
+slow promise is done
+slow
+```
+
+### 3.13.3 使用async函数重写Promise链
+
+返回Promise的API将产生一个Promise链，它将函数拆解成许多部分。
+```
+function getProcessedData(url) {
+    return downloadData(url)           // 返回一个 promise 对象
+        .catch(e => {
+            return downloadFallbackData(url)   // 返回一个 promise 对象
+        })
+        .then(v => {
+            return processDataInWorker(v);   // 返回一个 promise 对象
+        });
+}
+```
+可以重写单个async函数
+```
+async function getProcessedData(url) {
+    let v;
+    try {
+        v = await downloadData(url);
+    } catch (e) {
+        v = await downloadFallbackData(url);
+    }
+    return processDataInWorker(v);
+}
+```
+
+### 3.13.4 错误处理
+
+如果async函数内部抛出错误，则会导致返回的Promise对象变为reject状态。抛出的错误对象会被catch()方法回调函数接收到。
+```
+async function helloAsync() {
+    await new Promise(function (resolve, reject) {
+        throw new Error('错误');
+    });
+}
+
+helloAsync().then(v => console.log(v))
+            .catch(e => console.log(e.message));    //错误
+```
+上述代码中，async函数helloAsync()执行后，await后面的Promise对象会抛出一个错误对象，导致catch()方法的回调函数会被调用，它的参数就是抛出的错误对象。
+
+防止出错的方法是将await放到try/catch语句中
+```
+async function helloAsync() {
+    try {
+        await new Promise(function (resolve, reject) {
+            throw new Error('错误');
+        });
+    } catch(e) {
+        //错误处理
+    }
+    return await('hello');
+}
+```
+如果有多个await，可以统一放到try/catch语句中。
