@@ -278,6 +278,81 @@ console.log(category);    //web前端
 ```
 category: { name: category }语法含义：在找到book对象的category属性后，继续深入下一层（即到category对象中）查找name属性，并将其值赋给category局部变量。要注意代码最后一条语句中的category是{ name: category }中的category。
 
+结合前面局部变量名与对象属性名不同的例子一起来看，在解构语法中，冒号前面的标识符代表的是检索位置，其右侧为要被赋值的变量名；如果冒号右侧是花括号，则表示要赋予的最终值嵌套在对象内部更深的层级中。
+
+展开运算符和对象解构结合使用示例：
+```
+let person = {
+    name: '张三';
+    age: 18,
+}
+
+let { ...newObject } = person;
+let { anotherObject } = person;
+let { name, age, gendar } = { ...person, gendar: '男' };
+console.log(newObject);     //{ name: '张三', age: 18 }
+console.log(anotherObject);   // undefined
+console.log(name);     //张三
+console.log(gender);    //男
+```
+
+let { ...newObject } = person;
+
+let { anotherObject } = person;
+
+两段代码的区别，后者是提取person对象中的anotherObject属性并赋值给anotherObject变量，由于person对象没有该属性，因此为undefined。
+
+### 3.7.2 数组解构
+
+与对象解构的语法不同，数组解构使用方括号。由于数据解构本质上的不同，数组解构没有对象属性名的问题，因而语法上更简单。
+```
+let arr = [1, 2, 3];
+let [a, b, c] = arr;
+console.log(a);  //1
+console.log(b);  //2
+console.log(c);  //3
+```
+在数组解构语法中，变量值是根据数组中元素的顺序进行选取的。如果要获取指定位置的数组元素值，可以只为该位置的元素提供变量名。例如要获取数组中第3个位置的元素，可以采用下面方法来实现：
+```
+let arr = [1, 2, 3];
+let [, , c] = arr;
+console.log(c);  //3
+```
+变量c前面的逗号是前方元素的占位符，无论数组中的元素有多少个，都可以通过这种方式提取想要的元素。
+
+与对象解构不同，如果为已经声明过的变量进行数组解构赋值，不需要使用圆括号包裹解构赋值语句。
+```
+let arr = [1, 2, 3];
+let a, b, c;
+[a, b, c] = arr;   //ok
+```
+也可以在数组解构赋值表达式中为数组中的任意位置添加默认值，当指定位置的元素不存在或其值为undefined时使用默认值。
+```
+let arr = [1, 2, 3];
+let [a, b, c, d = 0] = arr;
+console.log(d);  //0
+```
+嵌套数组解构与嵌套对象解构的语法类似，在原有的数组结构模式中插入另一个数组解构模式，即可将解构过程深入到下一层级。
+```
+let categories = [ "c/c++", [ "Vue", "React" ], "Java" ];
+let [language1, [, language2]] = categories;
+
+console.log(language1);  //c/c++
+console.log(language2);  //React
+```
+变量language2两侧的方括号表示该变量的值应该到下一个层级的数组去查找，language2前面的逗号跳过了内部数组中的第一个元素，因此最终变量language2的是React。
+
+运算符和数组解构结合使用，将数组中剩余的元素赋值给一个特定的变量。
+```
+let arr = [1, 2, 3];
+let [a, ...others] = arr;   //将arr数组的剩余元素赋给others变量
+let [...newArr] = arr;   //数组复制的另一种实现方式
+console.log(a);    //1
+console.log(others);    //[2,3]
+console.log(others[0]);    //2
+console.log(newArr);    //[1, 2, 3]
+```
+
 ## 3.8 箭头函数
 
 ES6允许使用“箭头”(=>)定义函数，箭头函数的语法多变，根据实际的使用场景有多种形式，但都需要由函数参数、箭头和函数体组成。根据JavaScript函数定义的各种不同形式，箭头函数的参数和函数体可以分别采取不同的形式。
