@@ -174,7 +174,173 @@ axios({
 axios({
     method: 'post',
     url: '/login',
-})
-
-
+    data: {
+        username: 'lisi',
+        password: '1234',
+    }
+});
 ```
+为了方便使用,axios库为所有支持的请求方法提供了别名
++ axios.request(config)
++ axios.get(url[,config])
++ axios.delete(url[,config])
++ axios.head(url[,config])
++ axios.options(url[,config])
++ axios.post(url[,[data][,config]])
++ axios.patch(url[,[data][,config]])
+
+使用别名方法时,url,method和data这些属性都不必在配置对象中指定.
+
+## 15.4 请求配置
+
+axios库为请求提供了配置对象,在该对象中可以设置很多选项,常用的是url,method,headers和params.
+
+完成的选项如下:
+```
+{
+    //url是用于请求的服务器url
+    url: '/book',
+
+    //method是发起请求时使用的请求方法
+    method: 'get', //默认的
+
+    //baseURL将自动加在url前面,除非url是一个绝对URL
+    //为axios实例设置一个baseURL,就可以将相对URL传递给该实例的方法
+    baseURL: 'https://some-domain.com/api/',
+
+    //transformRequest允许在将请求数据发送到服务器前对其进行修改
+    //只能用于put,post,patch和delete这几个请求方法
+    //数组中的最后一个函数必须返回一个字符串,Buffer的实例,ArrayBuffer,FormData或Stream
+    //也可以修改headers对象
+    transformRequest: [ function (data, headers) {
+        //对data进行任意转换处理
+        return data;
+    }],
+
+    //transformResponse允许在将响应数据传递给then/catch之前对其进行更改
+    transformResponse: [function (data) {
+        //对data进行任意转换处理
+        return data;
+    }],
+
+    //headers是要发送的自定义请求头
+    headers: ( 'X-Requested-With': 'XMLHttpRequest'),
+
+    //params是与请求一起发送的URL参数
+    //必须是一个普通对象(plain object)或URLSearchParams对象
+    params: {
+        ID: 1
+    },
+
+    //paramsSerializer是一个负责params序列化的可选参数
+    //(e.g. https://npmjs.com/package/qs, http://api.jquery.com/jquery.param/)
+    paramsSerializer: function(params) {
+        return Qs.stringify(params, {arrayFormat: 'brackets'})
+    },
+
+    //data是作为请求体被发送的数据
+    //只适用于请求方法put,post,delete和patch
+    //在没有设置 transformRequest时,必须是以下类型之一
+    //- string, plain obuject,ArrayBuffer,ArrayBufferView,URLSearchParams
+    //- 浏览器专属: FormData,File,Blob
+    //- Node专属: Stream,Buffer
+    data: {
+        firstName: 'Fred',
+    },
+
+    //将数据发送到请求体的替代语法
+    //适用于Post方法
+    //只发送值,而不发送键
+    data: 'Country=Brasil&City=Belo Horizonte',
+
+    //timeout指定请求超时的毫秒数,默认是0,表示无超时时间
+    //如果请求耗费的时间超过timeout,则请求被终止
+    timeout:1000,
+
+    //withCredentials表示跨域请求时是否需要使用凭证
+    withCredentials: false, //默认的
+
+    //adapter允许自定义处理请求,以使测试更加容易
+    //返回一个 promise 并提供一个有效的响应
+    adapter: function (config) {
+        /* ... */
+    },
+
+    //auth表示应该适用HTTP基础验证,并提供凭证
+    //这将设置一个Authorization抱头,覆盖使用headers设置的现有的Authorization自定义报头
+    auth: {
+        username: 'janedoe',
+        password: 's00pers3cret',
+    },
+    //responseType表示服务器响应的数据类型
+    //可以是'arraybuffer','document','json','text'和'stream'
+    //浏览器专属: blob
+    responseType: 'json', //默认的
+
+    //responseEncoding表示用于解码响应数据的编码
+    //注意: 对于stream响应类型,将忽略
+    responseEncoding: 'utf8', //默认的
+
+    //xsrfCookieName是用作xsrf token值的cookie的名称
+    xsrfCookieName: 'XSRF-TOKEN',   //默认的
+
+    //xsrfHeaderName是携带xsrf token值的HTTP报头的名字
+    xsrfHeaderName: 'X-XSRF-TOKEN',   //默认的
+
+    //onUploadProgress允许为上传处理进度事件
+    //浏览器专属
+    onUploadProgress: function (progressEvent) {
+        //对原声进度事件的处理
+    },
+
+    //maxContentLength定义Node.js中允许的响应内容的最大大小(以字节为单位)
+    maxContentLength: 2000,
+
+    //maxBodyLength(只适用于Node的选项)定义允许的HTTP请求内容的最大大小(以字节为单位)
+    maxBodyLength: 2000,
+
+    //validateStatus定义对于给定的HTTP响应状态是解析(resolve)还是拒绝(reject)这个
+    //promise
+    //如果validateStatus返回true(或者设置为null或undefined)
+    //promise将被解析(resolve),否则,promise将被拒绝(reject)
+    validateStatus: function (status) {
+        return status >= 200 && status < 300;  //默认的
+    },
+
+    //maxRedirects定义在Node.js中follow的最大重定向数目
+    //如果设置为0,那么将不会follow任何重定向
+    maxRedirects: 5, //默认的
+
+    //socketPath定义要在Node.js中使用的Unix套接字
+    //例如, '/var/run/docker.sock'向docker守护进程发送请求
+    //只能指定socketPath或proxy,如果两者都指定,则使用socketPath
+    socketPath: null, //默认的
+    //httpAgent和httpsAgent用于定义在Node.js中执行HTTP和HTTPS时要使用的自定义代理
+    //允许配置类似keepAlive的选项,keepAlive默认没有启用
+    httpAgent: new http.Agent({ keepAlive: true }),
+    httpsAgent: new https.Agent({ keepAlive: true }),
+
+    //proxy定义代理服务器的主机名和端口
+    //auth表示HTTP基础验证应当用于连接代理,并提供凭据
+    //这将会设置一个Proxy-Authorization报头
+    //覆盖使用headers设置的任何现有的自定义Proxy-Authorization报头
+    proxy: {
+        host: '127.0.0.1',
+        port: 9000,
+        auth: {
+            username: 'mikeymike',
+            password: 'repunz31',
+        }
+    }, 
+    
+    // cancelToken指定用于取消请求的cancel token
+    cancelToken: new CancelToken(function (cancel) {
+    })
+
+    //decompress表示是否应该自动解压缩响应正文
+    //如果设置为true,则还将所有解压缩响应的responses对象中删除content-encoding报头
+    //- Node专属(浏览器的XMLHttpResquest无法关闭解压缩)
+    decompress: true   //默认的
+}
+```
+
