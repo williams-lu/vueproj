@@ -344,3 +344,149 @@ axios库为请求提供了配置对象,在该对象中可以设置很多选项,�
 }
 ```
 
+## 15.5 并发请求
+
+有时候需要向服务器发起多个请求,这可以用Promise.all实现.
+```
+function getUserAccount() {
+    return axios.get('/user/12345');
+}
+
+function getUserPermissions() {
+    return axios.get('/user/12345/permissions');
+}
+
+Promise.all([getUserAccount(), getUserPermissions()])
+.then(function (results) {
+    //两个请求现在都执行完成
+    const acct = results[0];
+    const perm = results[1];
+    //acct是getUserAccount()方法请求的响应结果
+    //perm是getUserPermissions()方法请求的响应结果
+});
+```
+
+## 15.6 创建实例
+
+可以使用自定义配置调用axios.create([config])方法创建一个axios实例,之后使用该实例向服务器发起请求,就不用每次请求时重复设置配置选项了.
+
+示例:
+```
+const instance = axios.create({
+    baseURL: 'https://some-domain.com/api/',
+    timeout: 1000,
+    headers: { 'X-Custom-Header': 'foobar' },
+});
+```
+
+## 15.7 配置默认值
+
+对于每次请求相同的配置选项,可以通过为配置选项设置默认值来简化代码的编写.项目中使用的全局axios默认值可以在项目的入口文件main.js中按照以下形式进行配置.
+```
+axios.defaults.baseURL = 'https://api.example.com';
+axios.defaults.headers.common['Authorization'] = AUTH_TOKEN;
+axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencode';
+axios.defaults.withCredentials = true
+```
+也可以在自定义实例中设置配置默认值,这些配置选项只有在使用该实例发起请求时才生效.
+
+示例代码:
+```
+//创建实例时设置配置默认值
+const instance = axios.create({
+    baseURL: 'https://api.example.com'
+});
+//实例创建后更改默认值
+instance.defaults.headers.common['Authorization'] = AUTH_TOKEN;
+```
+配置将按优先顺序进行合并.顺序是先在lib/defaults.js中找到的库的默认值,然后是实例的defaults属性,最后是请求的config参数.后者将优于前者.
+
+示例代码:
+```
+//使用由库提供的配置默认值来创建实例
+//此时超过配置的默认值是0
+var instance = axios.create();
+
+//覆写库的超时默认值
+//现在,在超时前,使用该实例发起的所有请求都会等待2.5s
+instance.defaults.timeout = 2500;
+
+//在发起请求时,覆写超时值
+instance.get('/longRequest', {
+    timeout: 5000
+});
+```
+
+## 15.8 拦截器
+
+有时需要统一处理HTTP的请求和响应,如登陆验证,这是就可以使用axios的拦截器,分为请求拦截器和响应拦截器,他们会在请求或响应被then()或catch()方法处理前拦截它们.
+
+axios的拦截器的使用形式如下:
+```
+//添加请求拦截器
+axios.interceptors.request.use(function (config) {
+    //在发送请求之前做些什么
+    return config;
+},function (error) {
+    //对请求错误做些什么
+    return Promise.reject(error);
+});
+
+//添加响应拦截器
+axios.interceptors.response.use(function (response) {
+    //对响应数据做些什么
+    return response;
+},function (error) {
+    //对响应错误做些什么
+    return Promise.reject(error);
+});
+```
+在14.10.1小节使用全局守卫实现了一个用户登陆验证的例子,不过这种方式只有简单的前端路由控制,用户一旦成功登陆,前端就保存了用户登陆的状态,允许用户访问受保护的资源.如果在这期间,该用户在服务器端失效了.例如,用户长时间未操作,服务器端强制下线,或者管理员将该用户拉入黑名单,那么前端就应该及时更新用户的状态,对用户的后续访问做出控制.在这种情况下,就应该使用axios的拦截器结合HTTP状态码进行用户是否已登陆的判断.
+
+代码如下:
+```
+//请求拦截器
+axios.interceptors.request.use(
+    config => {
+        if (token) {         //判断是否存在token,如果存在,则每个HTTP header都加上token
+            config.headers.Authorization = `token ${ store.state.token }`;
+        }
+        return config;
+    },
+    err => {
+        return Promise.reject(err);
+    }
+);
+
+//响应拦截器
+axios.interceptors.response.use(
+    response => {
+        return response;
+    },
+    error => {
+        if (error.response) {
+            swith (error.response.status) {
+                case 401:
+                    //如果返回401,则清楚token信息并跳转到登陆页面
+                    router.replace({
+                        path: 'login',
+                        query: {
+                            redirect: router.currentRoute.fullPath
+                        }
+                    })
+            }
+        }
+        return Promise.reject(error.response.data)
+    }
+);
+```
+如果之后想移除拦截器,则可以按以下方式调用.
+```
+const myInterceptor = axios.interceptors.request.use(function () { /* .... */ });
+axios.interceptors.request.eject(myInterceptor);
+```
+也可以为自定义的axios实例添加拦截器.示例代码:
+```
+const instance = axios.create();
+instancd.interceptors.request.use(function () { /*... */ });
+```
