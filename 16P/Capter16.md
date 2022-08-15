@@ -4,6 +4,8 @@
 
 Vuex是一个专门为Vue.js应用程序开发的状态管理模式。它采用集中式存储来管理应用程序中所有组件的状态,并以相应的规则保证状态以一种可预测的方式发生变化。Vuex也被集成到了Vue的官方调试工具vue-devtools中,提供了诸如另配置的time-travel调试\状态快照导入/导出等高级调试功能。
 
+![](images/vuex%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86%E5%9B%BE.png)
+
 ## 16.1 简单的状态管理
 
 Vue.js应用程序数据的真实来源是响应式数据对象,组件实例只是代理对它的访问,这一点经常被忽视。因此如果有一个需要被多个实例共享,可以使用reactive()方法使一个对象成为响应式数据。
@@ -99,3 +101,39 @@ const appB = Vue.createApp({
 作为一种约定,组件永远不允许直接改变属于store的状态,而应该通过分发事件通知store执行操作。这种约定的好处是,可以记录store中发生的所有状态变化,并实现高级调试助手,如变化日志、快照和历史重放/时间旅行。
 
 ## 16.2 安装Vuex
+
+可以使用CDN方式安装。代码如下：
+```
+<!-- 引用最新版 -->
+<script src="https://unpkg.com/vuex@next"></script>
+<!-- 引用指定版本 -->
+<script src="https://unpkg.com/vuex@4.0.0-rc.1"></script>
+```
+
+如果使用模块化开发，则使用npm安装方式。执行以下命令安装：
+```
+npm install vuex@next --save  
+或者
+yarn add vuex@next --save
+```
+在Vue3.0的脚手架项目中使用，在main.js文件导入createStore，并调用方法创建一个store实例，之后使用Vue.js应用程序实例的use()方法将该实例作为插件安装。
+```
+import { createApp } from 'vue'
+import { createStore } from 'vuex'
+
+//创建新的store实例
+const store = createStore({
+    state() {
+        return {
+            count: 1
+        }
+    }
+})
+const app = createApp({ /* 根组件 */ })
+
+将store实例作为插件安装
+app.use(store)
+```
+
+## 16.3 基本用法
+
