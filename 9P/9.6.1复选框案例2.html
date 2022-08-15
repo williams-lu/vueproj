@@ -10,7 +10,7 @@
 </head>
 <body>
     <div id="app">
-        <input id="agreement" type="checkbox" v-mode="isAgree" :true-value="trueVal" :false-value="falseVal">
+        <input id="agreement" type="checkbox" v-model="isAgree" v-bind:true-value="trueVal" v-bind:false-value="falseVal">
         <label for="agreement">{{ isAgree }}</label>
     </div>
     
