@@ -137,3 +137,116 @@ app.use(store)
 
 ## 16.3 基本用法
 
+Vuex使用单一状态树，也就是说，用一个对象包含了所有应用层级的状态，作为唯一数据源（single source of truth）而存在。每一个Vuex应用的核心就是store，store可以理解为保存应用程序状态的容器。store与普通的全局对象的区别有以下两点。
+
+(1)Vuex的状态存储是响应式的。当Vue组件从store中检索状态的时候，如果store中的状态发生变化，那么组件也会相应地得到高效更新。
+
+(2)不能直接改变store中的状态。改变store中的状态的唯一途径就是显示地提交mutation。这个可以确保每个状态更改都留下可跟踪的记录，从而能够启用一些工具来帮助我们更好理解应用。
+
+接下来通过一个购物车的实例学习Vuex的使用，按照以下步骤创建脚手架项目，安装Vuex并进行基础配置。
+
+(1)使用Vue CLI创建一个Vue3.0的脚手架项目，项目为statemanage，直接选择Default(Vue3.0 Preview)([Vue3] babel,eslint),开始项目创建。
+
+(2)启动VScode，打开项目所在文件夹，为项目安装Vuex。选择[终端]-[新建终端]选项，在弹出的终端窗口输入以下命令安装Vuex。
+```
+npm install vuex@next --save
+```
+(3)在实际项目开发中，我们通常是把状态管理相关文件单独放在一个文件夹下，以集中管理和配置。在src目录下新建一个文件夹store，在该文件夹下新建一个index.js文件。
+
+下面将按步骤编辑文件：
+
+store/index.js
+```
+import { createStore } from 'vuex'
+
+const store = createStore({
+    //状态数据通过state()函数返回
+    state() {
+        return {
+        }
+    }
+})
+
+export default store
+```
+(4)在程序入口main.js文件中使用store实例，从而在整个应用程序中应用Vuex的状态管理功能。
+
+main.js
+```
+import { createApp } from 'vue'
+import App from './App.vue'
+import store from './store'
+
+createApp(App).use(store).mount('#app')
+```
+首先将购物车的商品数据放在store中统一管理。在实际项目中，购物车中的商品数据是用户在商品页面添加商品保存的，而所有的商品信息都是从后端服务器得到的。简单起见，在前端硬编码一些商品数据，作为购物车中用户选购的商品。在src目录下新建一个文件夹data，在该文件夹下新建一个book.js文件。
+
+data/books.js
+```
+export default [
+    {
+        id: 1,
+        title: 'Java教程',
+        price: 188,
+        count: 1,
+    },
+        {
+        id: 2,
+        title: 'C++教程',
+        price: 144,
+        count: 1,
+    },
+        {
+        id: 3,
+        title: 'Python教程',
+        price: 166,
+        count: 1,
+    },
+        {
+        id: 4,
+        title: 'Perl教程',
+        price: 133,
+        count: 1,
+    },
+]
+```
+在books模块中导出一个图书商品的数组，将该数组作为store中状态数据的来源。编辑store目录下的index.js文件。
+
+store/index.js
+```
+import { createStore } from 'vuex'
+import books from '@/data/books.js'
+
+const store = createStore({
+    state() {
+        return {
+            items: books   //使用导入的books对items进行初始化
+        }
+    }
+})
+
+export default store
+```
+现在可以使用store.state.items访问商品数据。前面在main.js中已经引入了store实例，该store实例会被注入根组件下的所有子组件中，因此在组件中，就可以通过this.$store访问store。如果在组件中要展示store中的状态，应该使用计算属性返回store的状态。
+```
+computed: {
+    books() {
+        return this.$store.state.items;
+    }
+}
+```
+之后在组件的模板中就可以直接使用boobs。当store中的items发生改变时，组件内的计算属性books也会同步发生改变。
+```
+methods: {
+    addCart() {
+        this.$store.state.items.push({ ... });    //不要这么做
+    }
+}
+```
+既然选择了Vuex作为应用的状态管理方案，那么就应该遵照Vuex的要求：通过提交mutation()函数更改store中的状态。在严格模式下，如果store中的状态改变不是由mutation()函数引起的，则会抛开错误，而且如果直接修改store中的状态，Vue的调试工具无法跟踪状态的改变。在开发阶段，可以启用严格模式，以避免直接的状态修改，在创建store时，传入strict: true。
+```
+const store = createStore({
+    //....
+    strict: true
+})
+```
