@@ -189,11 +189,11 @@ axios({
 + axios.post(url[,[data][,config]])
 + axios.patch(url[,[data][,config]])
 
-使用别名方法时,url,method和data这些属性都不必在配置对象中指定.
+使用别名方法时,url,method和data这些属性都不必在配置对象中指定。
 
 ## 15.4 请求配置
 
-axios库为请求提供了配置对象,在该对象中可以设置很多选项,常用的是url,method,headers和params.
+axios库为请求提供了配置对象,在该对象中可以设置很多选项,常用的是url、method、headers和params。
 
 完成的选项如下:
 ```
@@ -210,7 +210,7 @@ axios库为请求提供了配置对象,在该对象中可以设置很多选项,�
 
     //transformRequest允许在将请求数据发送到服务器前对其进行修改
     //只能用于put,post,patch和delete这几个请求方法
-    //数组中的最后一个函数必须返回一个字符串,Buffer的实例,ArrayBuffer,FormData或Stream
+    //数组中的最后一个函数必须返回一个字符串、Buffer的实例、ArrayBuffer、FormData或Stream
     //也可以修改headers对象
     transformRequest: [ function (data, headers) {
         //对data进行任意转换处理
@@ -368,7 +368,7 @@ Promise.all([getUserAccount(), getUserPermissions()])
 
 ## 15.6 创建实例
 
-可以使用自定义配置调用axios.create([config])方法创建一个axios实例,之后使用该实例向服务器发起请求,就不用每次请求时重复设置配置选项了.
+可以使用自定义配置调用axios.create([config])方法创建一个axios实例,之后使用该实例向服务器发起请求,就不用每次请求时重复设置配置选项了。
 
 示例:
 ```
@@ -381,14 +381,14 @@ const instance = axios.create({
 
 ## 15.7 配置默认值
 
-对于每次请求相同的配置选项,可以通过为配置选项设置默认值来简化代码的编写.项目中使用的全局axios默认值可以在项目的入口文件main.js中按照以下形式进行配置.
+对于每次请求相同的配置选项,可以通过为配置选项设置默认值来简化代码的编写。项目中使用的全局axios默认值可以在项目的入口文件main.js中按照以下形式进行配置。
 ```
 axios.defaults.baseURL = 'https://api.example.com';
 axios.defaults.headers.common['Authorization'] = AUTH_TOKEN;
 axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencode';
 axios.defaults.withCredentials = true
 ```
-也可以在自定义实例中设置配置默认值,这些配置选项只有在使用该实例发起请求时才生效.
+也可以在自定义实例中设置配置默认值,这些配置选项只有在使用该实例发起请求时才生效。
 
 示例代码:
 ```
@@ -399,7 +399,7 @@ const instance = axios.create({
 //实例创建后更改默认值
 instance.defaults.headers.common['Authorization'] = AUTH_TOKEN;
 ```
-配置将按优先顺序进行合并.顺序是先在lib/defaults.js中找到的库的默认值,然后是实例的defaults属性,最后是请求的config参数.后者将优于前者.
+配置将按优先顺序进行合并。顺序是先在lib/defaults.js中找到的库的默认值,然后是实例的defaults属性,最后是请求的config参数。后者将优于前者。
 
 示例代码:
 ```
@@ -419,7 +419,7 @@ instance.get('/longRequest', {
 
 ## 15.8 拦截器
 
-有时需要统一处理HTTP的请求和响应,如登陆验证,这是就可以使用axios的拦截器,分为请求拦截器和响应拦截器,他们会在请求或响应被then()或catch()方法处理前拦截它们.
+有时需要统一处理HTTP的请求和响应,如登陆验证,这是就可以使用axios的拦截器,分为请求拦截器和响应拦截器,他们会在请求或响应被then()或catch()方法处理前拦截它们。
 
 axios的拦截器的使用形式如下:
 ```
@@ -441,7 +441,7 @@ axios.interceptors.response.use(function (response) {
     return Promise.reject(error);
 });
 ```
-在14.10.1小节使用全局守卫实现了一个用户登陆验证的例子,不过这种方式只有简单的前端路由控制,用户一旦成功登陆,前端就保存了用户登陆的状态,允许用户访问受保护的资源.如果在这期间,该用户在服务器端失效了.例如,用户长时间未操作,服务器端强制下线,或者管理员将该用户拉入黑名单,那么前端就应该及时更新用户的状态,对用户的后续访问做出控制.在这种情况下,就应该使用axios的拦截器结合HTTP状态码进行用户是否已登陆的判断.
+在14.10.1小节使用全局守卫实现了一个用户登陆验证的例子,不过这种方式只有简单的前端路由控制,用户一旦成功登陆,前端就保存了用户登陆的状态,允许用户访问受保护的资源。如果在这期间,该用户在服务器端失效了。例如,用户长时间未操作,服务器端强制下线,或者管理员将该用户拉入黑名单,那么前端就应该及时更新用户的状态,对用户的后续访问做出控制。在这种情况下,就应该使用axios的拦截器结合HTTP状态码进行用户是否已登陆的判断。
 
 代码如下:
 ```
