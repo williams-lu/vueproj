@@ -1,0 +1,30 @@
+<!-- 9.6.1 值绑定 复选框案例2 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>9.6.1复选框案例2</title>
+</head>
+<body>
+    <div id="app">
+        <input id="agreement" type="checkbox" v-mode="isAgree" :true-value="trueVal" :false-value="falseVal">
+        <label for="agreement">{{ isAgree }}</label>
+    </div>
+    
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    isAgree: false,
+                    trueVal: '真',
+                    falseVal: '假',
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

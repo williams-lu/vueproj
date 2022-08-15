@@ -1,0 +1,34 @@
+<!-- 9.6.2单选按钮案例1 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>9.6.2单选按钮案例1</title>
+</head>
+<body>
+    <div id="app">
+        <input id="male" type="radio" v-model="gender" :value="genderVal[0]">
+        <label for="male">男</label>
+        <br>
+        <input id="female" type="radio" v-model="gender" :value="genderVal[1]">
+        <label for="female">女</label>
+        <br>
+        <span>性别：{{ gender }}</span>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const vm = Vue.createApp({
+            data() {
+                return {
+                    gender: '',
+                    genderVal: ['帅哥', '美女'],
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
