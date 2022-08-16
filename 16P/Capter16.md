@@ -250,3 +250,464 @@ const store = createStore({
     strict: true
 })
 ```
+Vuex中的mutation()函数非常类似于事件：每个mutation()函数都有一个字符串的事件类型和一个处理器函数。这个处理器函数就是实际进行状态更改的地方，它接收state作为第一个参数。
+```
+const store = createStore({
+    state() {
+        return {
+            count: 1
+        }
+    },
+
+    //mutations选项中定义修改状态的方法
+    //这些方法接收state作为第1个参数
+    mutations: { 
+        increment (state) {
+            state.count++
+        }
+    }
+})
+```
+我们不能直接调用一个mutation()处理函数，mutations选项更像是事件注册，当触发一个类型为increment的mutation时，调用此函数。要调用一个mutation()处理器函数，需要用它的类型调用store.commit()方法。示例：
+```
+store.commit('increment')
+```
+实际上，提交时指定的mutation的类型就是我们在mutation选项中定义的mutation()处理器函数的名字。
+
+在使用store.commit()方法提交mutation()时，还可以传入额外的参数，即mutation()的载荷(payload)。代码如下所示：
+```
+// ...
+mutations: {
+    increment (state, n) {
+        state.count += n
+    }
+}
+
+store.commit('increment', 10)
+```
+载荷也可以是一个对象。代码如下：
+```
+//...
+mutations: {
+    increment (state, payload) {
+        state.count += payload.amount
+    }
+}
+
+store.commit('increment', {
+    amount: 10
+})
+```
+提交mutation时，也可以使用包含type属性的对象，这样传一个参数就可以了。代码如下所示：
+```
+store.commit({
+    type: 'increment',
+    amount: 10,
+})
+```
+当使用对象风格提交时，整个对象将作为载荷传给mutation函数，因此处理器保持不变。代码如下：
+```
+mutations: {
+    increment (state, payload) {
+        state.count += payload.amount
+    }
+}
+```
+还可以用常量替代mutation的类型。可以把常量放到一个单独的JS文件中，有助于项目团队对store中所包含的mutation一目了然。例如：
+```
+//mutation-types.js
+export const SOME_MUTATION = 'SOME_MUTATION'
+
+//store.js
+import { createStore } from 'vuex'
+import { SOME_MUTATION } from './mutation-types'
+
+const store = createStore({
+    state: { ... },
+    mutations: {
+        //可以使用ES2015的计算属性命名功能来使用一个常量作为函数名
+        [SOME_MUTATION] (state) {
+            // mutate状态
+        }
+    }
+})
+```
+接下来，在store中定义一个mutation，通过提交该mutation向购物车中添加商品。修改store目录下的index.js文件。修改的代码如下所示：
+
+store/index.js
+```
+import { createStore } from 'vuex'
+import books from '@/data/books.js'
+
+const store = createStore({
+    state() {
+        return {
+            items: books      //使用导入的books对items进行初始化
+        }
+    }，
+    mutations: {
+        pushItemToCart (state, book) {
+            state.items.push(book);
+        }
+    }
+})
+
+export default store
+```
+购物车组件。在components目录下新建Cart.vue。代码如下所示：
+
+Cart.vue
+```
+<template>
+    <div>
+        <table>
+            <tr>
+                <td>商品编号</td>
+                <td><input type="text" v-model.number="id"></td>
+            </tr>
+            <tr>
+                <td>商品名称</td>
+                <td><input type="text" v-model="title"></td>
+            </tr>
+            <tr>
+                <td>商品价格</td>
+                <td><input type="text" v-model="price"></td>
+            </tr>
+            <tr>
+                <td colspan="2"><button @click="addCart">加入购物车</button></td>
+            </tr>
+        </table>
+        <table>
+            <thead>
+                <tr>
+                    <th>编号</th>
+                    <th>商品名称</th>
+                    <th>价格</th>
+                    <th>数量</th>
+                    <th>金额</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="book in books" :key="book.id">
+                    <td>{{ book.id }}</td>
+                    <td>{{ book.title }}</td>
+                    <td>{{ book.price }}</td>
+                    <td>
+                        <button>-</button>
+                        {{ book.count }}
+                        <button>+</button>
+                    </td>
+                    <td>金额</td>
+                    <td><button>删除</button></td>
+                </tr>
+            </tbody>
+        </table>
+        <span>总价：￥0.00</span>
+    </div>
+</template>
+
+<script>
+export default {
+    data() {
+        return {
+            id: null,
+            title: '',
+            price: '',
+            quantity: 1
+        }
+    },
+    computed: {
+        books() {
+            return this.$store.state.items;
+        }
+    },
+    methods: {
+        addCart() {
+            this.$store.commit('pushItemToCart', {
+                id: this.id,
+                title: this.title,
+                price: this.price,
+                count: this.quantity,
+            })
+            this.id = '';
+            this.title = '';
+            this.price = '';
+        }
+    }
+};
+</script>
+
+...  //省略了CSS样式代码
+```
+简单起见，我们使用表格对购物车中的商品项进行布局。
+
+最后在App.vue组件中删除HelloWord组件，使用Cart组件。代码如下：
+
+App.vue
+```
+<template>
+    <Cart />
+</template>
+
+<script>
+import Cart from './component/Cart.vue'
+
+export default {
+    name: 'App',
+    components: {
+        Cart
+    }
+}
+</script>
+
+...  //省略了CSS样式代码
+```
+打开终端窗口，执行npm run serve命令，打开浏览器，访问http://localhost:8080/
+
+## 16.4 mapMutation
+
+继续完善购物车程序，为购物车添加删除商品功能。删除商品同样要修改store中保存的购物车商品数据，因此继续在mutations选项中定义一个deleteItem mutation。编辑store目录下的index.js文件，修改后的代码。
+```
+const store = createStore({
+    ...,
+
+    mutations: {
+        pushItemToCart (state, book) {
+            state.items.push(book);
+        },
+        deleteItem (state, id) {
+            //根据提交的id载荷，查找是否存在相同id的商品，返回商品的索引
+            let index = state.items.findIndex(item => item.id === id);
+            if(index >= 0) {
+                state.items.splice(index, 1);
+            }
+        }
+    }
+})
+
+export default store
+```
+编辑Cart.vue,为“删除”按钮添加click事件处理，提交deleteItem mutation。代码如下所示：
+```
+<td><button @click="$store.commit('deleteItem', book.id)">删除</button></td>
+```
+再次运行项目，单击“删除”按钮，可以看到购物车中的商品项被成功删除。
+
+如果组件中需要提交的mutation较多，使用this.$store.commit()方法来提交就会很烦琐，为了简化mutation的提交，可以使用mapMutations()辅助函数将组件中的方法映射为store.commit()调用。
+
+代码如下：
+```
+import { mapMutations } from 'vuex'
+methods: mapMutations({
+    //将this.increment()映射为this.$store.commit('increment')
+    'increment',
+
+    //将this.incrementBy(amount)映射为this.$store.commit('incrementBy', amount)
+    'incrementBy'
+})
+```
+除了使用字符串数组外，mapMutations()函数的参数也可以是一个对象。代码如下所示：
+```
+import { mapMutation } from 'vuex'
+methods: mapMutations({
+    //将this.add()映射为this.$store.commit('increment')
+    add: 'increment'
+})
+```
+在大多数情况下，组件还有自己的方法，在这种情况下，可以使用ES6的展开运算符提取mapMutations()函数返回的对象属性，复制到methods选项中。代码如下所示：
+```
+import { mapMutations } from 'vuex'
+
+export default {
+    //...
+    methods: {
+        ...mapMutations([
+            //将this.increment()映射为this.$store.commit('increment')
+            'increment',
+
+            //mapMutations也可以载荷
+            //将this.incrementBy(amount)映射为this.$store.commit('incrementBy', amount)
+            'incrementBy'
+        ]),
+        ...mapMutations({
+            //将this.add()映射为this.$store.commit('increment')
+            add: 'increment'
+        })
+    }
+}
+```
+修改Cart.vue,使用mapMutations()辅助函数简化mutation的提交。代码如例所示：
+
+Cart.vue
+```
+...
+<td><button @click="deleteItem(book.id)">删除</button></td>
+
+    ...
+    import { mapMutations } from 'vuex'
+
+    ...
+    methods: {
+        ...mapMutations({
+            addItemToCart: 'pushItemToCart'
+        }),
+        ...mapMutations({
+            'deleteItem'
+        }),
+        addCart() {
+            this.addItemToCart({
+                id: this.id,
+                title: this.title,
+                price: this.price,
+                count: this.quantity,
+            })
+            this.id = '';
+            this.title = '';
+            this.price = '';
+        }
+    }
+```
+代码中为了演示mapMutations()辅助函数的用法，采用了两种方式映射mutation,实际开发中当然不必如此，采用统一的映射方式更有助于代码的维护和修改。
+
+## 16.5 mapState
+
+当一个组件需要使用多个store状态属性时，将这些状态都声明为计算机属性就会有些重复和冗余。为了解决这个问题，可以使用mapState()辅助函数生成计算属性。例如在store中定义了两个状态。代码如下所示：
+```
+const store = createStore({
+    state() {
+        return {
+            count: 0,
+            message: 'Vue不难呀'
+        }
+    },
+    ...
+})
+```
+在组件中使用mapState()辅助函数生成计算属性。代码如下所示：
+```
+import { mapState } from 'vuex'
+
+export default {
+    //...
+    computed: mapState({
+        count: 'count',
+        msg: 'message',
+    })
+}
+```
+可以看到不管是使用普通函数，还是箭头函数，都没有直接使用字符串方便。但如果在计算属性中还要访问组件内的数据属性，那么就只能使用普通函数的方式。代码如下：
+```
+import { mapState } from 'vuex'
+
+export default {
+    data() {
+        return {
+            price: 99
+        }
+    },
+    computed: mapState({
+        totalPrice(state) {
+            return this.price * state.count;
+        }
+    })
+}
+```
+这里不能使用箭头函数
+
+如果计算属性的名字和store中状态属性的名字相同，那么还可以进一步简化，直接给mapState()函数传递一个字符串数组即可。代码如下：
+```
+computed: mapState([
+    //映射 this.count为store.state.count
+    'count',
+    //映射 this.message为store.state.message
+    'message'
+])
+```
+与mapMutations()一样，mapState()函数返回的也是一个对象，因此可以使用展开运算符将它和组件内的本地计算属性结合一起使用。代码如下：
+```
+computed: {
+    localComputed() { /*....*/ },
+    //使用对象展开运算符将此对象混入外部对象中
+    ...mapState({
+        //...
+    })
+}
+```
+接下来修改Cart.vue,使用mapState()辅助函数生成books计算属性。修改的代码如下：
+```
+import { mapMutations, mapState } from 'vuex'
+...
+computed: {
+    ...mapState({
+        books: 'items'
+    })
+},
+```
+
+## 16.6 getter
+
+假如在store的状态中定义了一个图书数组。代码如下：
+```
+const store = createState({
+    state() {
+        return {
+            books: [
+                { id: 1, title: 'vue教程', isSold: false },
+                { id: 2, title: 'C++教程', isSold: true},
+                { id: 3, title: 'Python教程', isSold: true },
+            ]
+        }
+    },
+    ...
+})
+```
+在组件内需要得到正在销售的图书，于是定义一个计算属性sellingBooks，对state中的books进行过滤。代码如下：
+```
+computed: {
+    sellingBooks() {
+        return this.$store.state.books.filter(book => book.isSold === true);
+    }
+}
+```
+如果多个组件都需要用到sellingBooks属性，那么应该怎么办？
+
+Vuex允许我们在store中定义getters(可以认为是store的计算属性)。与计算属性一样，getter的返回值会根据它的依赖项被缓存起来，且只有在它的依赖项发生改变时才会重新计算。
+
+getter接收state作为其第1个参数。代码如下：
+```
+const store = createStore({
+    state() {
+        return {
+            books: [
+                { id: 1, title: 'vue教程', isSold: false },
+                { id: 2, title: 'C++教程', isSold: true},
+                { id: 3, title: 'Python教程', isSold: true },
+            ]
+        }
+    },
+    getters: {
+        sellingBooks: state => state.books.filter(book => book.isSold === true)
+    }
+})
+```
+我们定义的getter将作为store.getters对象的属性来访问。代码如下：
+```
+<ul>
+    <li v-for="book in this.$store.getters.sellingBooks" :key="book.id">
+        {{ book.title }}
+    </li>
+</ul>    
+```
+getter也可以接收其他getter作为第2个参数。代码如下：
+```
+getters: {
+    sellingBooks: state => state.books.filter(book => book.isSold === true),
+    sellingBooksCount: (state, getters) => {
+        return getters.sellingBooks.length
+    }
+}
+```
+在组件内，要简化getter的调用，同样可以使用计算属性。代码如下：
+
+
