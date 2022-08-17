@@ -709,5 +709,367 @@ getters: {
 }
 ```
 在组件内，要简化getter的调用，同样可以使用计算属性。代码如下：
+```
+computed: {
+    sellingBooks() {
+        return this.$store.getters.sellingBooks;
+    },
+    sellingBooksCount() {
+        return this.$store.getters.sellingBooksCount;
+    }
+}
+```
+要注意,作为属性访问的getter作为Vue的响应式系统的一部分被缓存.
+
+如果想简化上述getter在计算属性中的访问形式,则可以使用mapGetters()辅助函数,这个辅助函数的用法和mapMutations(),mapState()类似.代码如下:
+```
+computed: {
+    //使用对象展开运算符将getter混入computed中
+    //传递数组作为参数
+    ...mapGetters({
+        'sellingBooks',
+        'sellingBooksCount',
+        //...
+    }),
+    //传递对象作为参数
+    ...mapGetters({
+        //将this.booksCount 映射为 this.$store.getters.sellingBooksCount
+        booksCount: 'sellingBooksCount'
+    })
+}
+```
+getter还有更灵活的用法,通过让getter返回一个函数来实现给getter传参.例如, 下面的getter根据图书id查找图书对象.
+```
+getters: {
+    ...
+    getBookById: function(state) {
+        return function(id) {
+            return state.books.find(book => book.id === id);
+        }
+    }
+}
+```
+可以使用箭头函数简化上述代码.如下:
+```
+getters: {
+    ...
+    getBookById: state => id => state.books.find(book => book.id === id);
+}
+```
+下面在组件模板中的调用将返回{"id": 2,"title":"C++教程","isSold": true}
+```
+<p>{{ $store.getters.getBookById(2) }}</p>
+```
+下面完成购物车中单项商品价格和所有商品总价的计算,单项商品价格是商品的价格乘以总量,总价是单项商品价格相加的结果.由于购物车中的商品是存储在store中的,因此单项商品价格和所有商品总价的计算应该通过getter完成,而不是直接在组件内定义计算属性来完成.
+
+编辑store目录下的index.js文件,添加计算单项商品价格和所有商品总价的getter.代码如下:
+
+store/index.js
+```
+const store = createStore({
+    ...,
+    getters: {
+        cartItemPrice(state) {
+            return function(id) {
+                let item = state.items.find(item => item.id === id);
+                if(item) {
+                    return item.price * item.count;
+                }
+            }
+        },
+        cartTotalPrice(state) {
+            return state.items.reduce((total, item) => {
+                return total + item.price * item.count;
+            }, 0);
+        }
+    }
+})
+```
+如果getter要接收参数,则需要getter返回一个函数来实现给getter传参.
+
+编辑Cart.vue,在computed选项中使用mapGetters()映射上述两个getter, 然后修改模板代码,完善单项商品价格计算和购物车中所有商品总价的计算.代码如下:
 
 
+Cart.vue
+```
+...
+<table>
+    <thead>
+        <tr>
+            <th>编号</th>
+            <th>商品名称</th>
+            <th>价格</th>
+            <th>数量</th>
+            <th>金额</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr v-for="book in books" :key="book.id">
+            <td>{{ book.id }}</td>
+            <td>{{ book.title }}</td>
+            <td>{{ book.price }}</td>
+            <td>
+                <button>-</button>
+                {{ book.count }}
+                <button>+</button>
+            </td>
+            <td>{{ itemPrice(book.id) }}</td>
+            <td><button @click="deleteItem(book.id)">删除</button></td>
+        </tr>
+    </tbody>
+</table>
+<span>总价: ${{ totalPrice }}</span>
+
+...
+import { mapMutations, mapState, mapGetters } from 'vuex'
+
+computed: {
+    ...mapState({
+        books: 'items'
+    }),
+    ...mapGetters({
+        itemPrice: 'cartItemPrice',
+        totalPrice: 'cartTotalPrice',
+    })
+},
+```
+下面实物购物车中商品数量加1和减1的功能,这个功能的实现和getter无关,因为要修改store中所存储的商品的数量,因此是通过mutation实现商品数量的变化.
+
+编辑store目录下的index.js文件,修改后的代码如下所示:
+
+store/index.js
+```
+...
+mutations: {
+    ...
+    incrementItemCount(state, {id, count}) {
+        let item = state.items.find(item => item.id === id);
+        if(item) {
+            item.count += count;  //如果count为1,则加1;如果count为-1,则减1
+        }
+    }
+},
+```
+编辑Cart.vue,在methods选项中使用mapMutations()辅助函数映射incrementItemCount,并为减号按钮和加号按钮添加click事件的处理代码.修改后的代码如下所示:
+
+Cart.vue
+```
+<td>
+    <button :disabled="book.count===0" @click="increment({id: book.id, count: -1})">-</button>
+    {{ book.count }}
+    <button @click="increment({id: book.id, count: 1})">+</button>
+</td>
+
+...
+
+methods: {
+    ...mapMutations({
+        addItemToCart: 'pushItemToCart',
+        increment: 'incrementItemCount'
+    }),
+    ...mapMutations([
+        'deleteItem'
+    ]),
+    addCart() {
+        ...
+    }
+}
+```
+运行项目,访问http://localhost:8080/, 随意增加某项商品的数量
+
+## 16.7 action
+
+在定义mutation时,一条重要的原则就是mutation必须是同步函数.换句话,在mutation()处理器函数中,不能存在异步调用.例如:
+```
+mutations: {
+    someMutation (state) {
+        api.callAsyncMethod(() => {
+            state.count++
+        })
+    }
+}
+```
+在someMutation()函数中调用api.callAsyncMethod()方法,传入了一个回调函数,这是一个异步调用.记住,不要这么做,因为这会让调试变得困难.假设正在调试应用程序并查看devtool中的mutation日志,对于每个记录的mutation,devtool都需要捕捉到前一状态和后一状态的快照.然而,在上面的例子中,mutation中的api.callAsyncMethod()方法中的异步回调让这不可能完成.因为当mutation被提交的时候,回调函数还没有被调用,devtool也无法知道回调函数什么时候真正被调用.实质上,任何在回调函数中执行的状态的改变都是不可追踪的.
+
+如果确实需要执行异步操作,那么应该使用action.action类似于mutation,不同之处在于:
+
++ action提交的是mutation,而不是直接变更状态.
++ action可以包含任意异步操作.
+
+一个简单的action如下所示:
+```
+const store = createStore({
+    state() {
+        return {
+            count: 0
+        }
+    },
+    mutations: {
+        increment (state) {
+            state.count++
+        }
+    },
+    actions: {
+        increment (context) {
+            context.commit('increment')
+        }
+    }
+})
+```
+action处理函数接收一个与store实例具有相同方法和属性的context对象,因此可以利用该对象调用commit()方法提交mutation,或者通过context.state和context.getters访问state和getter.甚至可以用context.dispatch()调用其他的action.要注意的是,context对象并不是store实例本身.
+
+如果在action中需要多次调用commmit, 则可以考虑使用ES6中的结构语法简化代码.代码如下:
+```
+actions: {
+    increment ({ commit }) {
+        commit('increment')
+    }
+}
+```
+
+### 16.7.1 分发action
+
+action通过store.dispatch()方法分发.代码如下:
+```
+store.dispatch('increment')
+```
+action和mutation看似没什么区别,实际上,它们之间最大的区别就是action中可以包含异步操作.例如:
+```
+actions: {
+    incrementAsync ({ commit }) {
+        setTimeout(() => {
+            commit('increment')
+        }, 1000)
+    }
+}
+```
+action同样支持以载荷和对象方式进行分发.代码如下:
+```
+//载荷是一个简单值
+store.dispatch('incrementAsync', 10)
+
+//载荷是一个对象
+store.dispatch('incrementAsync', {
+    amount: 10
+})
+
+//直接传递一个对象进行分发
+store.dispatch({
+    type: 'incrementAsync',
+    amount: 10
+})
+```
+一个实际的例子是购物车结算操作,该操作涉及调用一个异步API和提交多个mutation.代码如下:
+```
+actions: {
+    chechout ({ commit, state }, produces) {
+        //保存购物车中当前的商品项
+        const savedCartItems = [...state.cart.added]
+        //发出结算请求, 并乐观地清空购物车
+        commit(types.CHECKOUT_REQUEST)
+        //shop.buyProducts()方法接收一个成功回调和一个失败回调
+        shop.buyProducts(
+            products,
+            //处理成功
+            () => commit(types.CHECKOUT_SUCCESS),
+            //处理失败
+            () => commit(types.CHECKOUT_FAILURE, savedCartItems)
+        )
+    }
+}
+```
+checkout执行一个异步操作流,并通过提交这些操作记录action的副作用(状态更改).
+
+### 16.7.2 在组件中分发action
+
+在组件中可以使用this.$store.dispatch('XXX')方法分发action,或者使用mapActions()辅助函数将组件的方法映射为store.dispatch调用.代码如下:
+
+store.js
+```
+const store = createStore({
+    state() {
+        return {
+            conunt: 0
+        }
+    },
+    mutations: {
+        increment (state) {
+            state.count++;
+        },
+        incrementBy (state, n) {
+            state.count += n;
+        },
+    },
+    actions: {
+        increment ({ commit }) {
+            commit('increment');
+        },
+        incrementBy ({ commit }, n) {
+            commit('incrementBy', n);
+        }
+    }
+})
+```
+组件
+```
+<template>
+    `<button @click="incrementBy(10)">
+        You clicked me {{ count }} times.
+    </button>`
+</template>
+
+import { mapActions } from 'vuex'
+export default {
+    //...
+    methods: {
+        ...mapActions([
+            //将this.increment()映射为this.$store.dispatch('increment')
+            'increment',
+            //mapActions也支持载荷
+            //将this.increment(n)映射为this.$store.dispatch('incrementBy', n)
+            'incrementBy',
+        ])
+        ...mapActions([
+            //将this.add()映射为this.$store.dispatch('increment')
+            add: 'increment',
+        ])
+    }
+}
+```
+
+### 16.7.3 组合action
+
+action通常是异步的,那么如何知道action何时完成?更重要的是,我们如何才能组合多个action来处理更复杂的异步流程呢?
+
+首先,要知道store.dispatch()方法可以处理被触发的action的处理函数返回的Promise,并且store.dispatch()方法仍旧返回Promise.例如:
+```
+actions: {
+    actionA ({ commit }) {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                commit('someMutation')
+                resolve()
+            }, 1000)
+        })
+    }
+}
+```
+现在可以:
+```
+store.dispatch('actionA').then(() => {
+    //....
+})
+```
+另外一个action中也可以:
+```
+actions: {
+    //...
+    actionB ({ dispatch, commit }) {
+        return dispatch('actionA').then(() => {
+            commit('someOtherMutation')
+        })
+    }
+}
+```
+最后,如果使用store/await,则可以按以下方式组合action
