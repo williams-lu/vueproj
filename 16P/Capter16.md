@@ -1072,4 +1072,113 @@ actions: {
     }
 }
 ```
-最后,如果使用store/await,则可以按以下方式组合action
+最后,如果使用store/await,则可以按以下方式组合action.
+```
+//假设getData()和getOtherData()返回的是Promise
+actions: {
+    async actionA ({ commit }) {
+        commit('gotData', await getData())
+    },
+    async actionB ({ dispatch, commit }) {
+        await dispatch('actionA')  //等待actionA完成
+        commit('gotOtherData', await getOtherData())
+    }
+}
+```
+一个store.dispatch()方法在不同模块中可以触发多个action处理函数.在这种情况下,只有当所有触发的处理函数完成后,返回的Promise才会执行.
+
+下面给出一个简单的例子,如何组合action来处理异步流程.代码没有采用单文件组件,而是在HTML页面中直接编写,如下所示:
+
+ComposingActions.html
+```
+<div id="app">
+    <book></book>
+</div>
+
+<script src="http://unpkg.com/vue@next"></script>
+<script src="http://unpkg.com/vuex@next"></script>
+<script>
+    const app = Vue.createApp({});
+    const store = Vuex.createStore({
+        state() {
+            return {
+                book: {
+                    title: "C++教程",
+                    price: 168,
+                    quantity: 1,
+                },
+                totalPrice: 0
+            }
+        },
+        mutations: {
+            //增加图书数量
+            incrementQuantity (state, quantity) {
+                state.book.quantity += quantity;
+            },
+            //计算图书总价
+            calculateTotalPrice(state) {
+                state.totalPrice = state.book.price * state.book.quantity;
+            }
+        },
+        actions: {
+            incrementQuantity({commit}, n) {
+                //返回一个Promise
+                return new Promise((resolve, reject) => {
+                    //模拟异步操作
+                    setTimeout(() => {
+                        //提交mutation
+                        commit('incrementQuantity', n)
+                        resolve()
+                    })
+                }, 1000)
+            }
+        },
+        updateBook({ dispatch, commit }, n) {
+            // 调用dispatch()方法触发incrementQuantity action
+            // incrementQuantity action返回一个Promise
+            // dispatch对其进行处理,仍旧返回Promise
+            // 因此可以继续调用then()方法
+            return dispatch('incrementQuantity', n).then(() => {
+                //提交mutation
+                commit('calculateTotalPrice');
+            })
+        }
+    });
+
+    app.component('book', {
+        data() {
+            return {
+                quantity: 1
+            }
+        },
+        computed: {
+            ...Vuex.mapState([
+                'book',
+                'totalPrice',
+            ])
+        },
+        methods: {
+            ...Vuex.mapAction([
+                'updateBook',
+            ]),
+            addQuantity(){
+                this.updateBook(this.quantity)
+            }
+        },
+        template: 
+            `<div>
+                <p>书名: {{ book.title }}</p>
+                <p>价格: {{ book.price }}</p>
+                <p>数量: {{ book.quantity }}</p>
+                <p>总价: {{ totalPrice }}</p>
+                <p>
+                    <input type="text" v-model.number="quantity">
+                    <button @click="addQuantity">增加数量</button>
+                </p>
+            <div> `
+    });
+
+    app.use(store).mount('#app');
+</script>
+```
+我们在store中定义了两个状态数据:book对象和totalPrice,并为修改它们的状态分别定义了mutation:incrementQuantity和calculateTotalPrice,之后定义了两个action:incrementQuantity和updateBook,前者模拟异步操作提交incrementQuantity mutation修改图书数量;后者调用dispatch()方法触发前者的调用,在前者成功完成后,提交calculateTotalPrice mutation, 计算图书的总价.
