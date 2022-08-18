@@ -719,9 +719,9 @@ computed: {
     }
 }
 ```
-要注意,作为属性访问的getter作为Vue的响应式系统的一部分被缓存.
+要注意,作为属性访问的getter作为Vue的响应式系统的一部分被缓存。
 
-如果想简化上述getter在计算属性中的访问形式,则可以使用mapGetters()辅助函数,这个辅助函数的用法和mapMutations(),mapState()类似.代码如下:
+如果想简化上述getter在计算属性中的访问形式,则可以使用mapGetters()辅助函数,这个辅助函数的用法和mapMutations(),mapState()类似。代码如下:
 ```
 computed: {
     //使用对象展开运算符将getter混入computed中
@@ -738,7 +738,7 @@ computed: {
     })
 }
 ```
-getter还有更灵活的用法,通过让getter返回一个函数来实现给getter传参.例如, 下面的getter根据图书id查找图书对象.
+getter还有更灵活的用法,通过让getter返回一个函数来实现给getter传参.例如, 下面的getter根据图书id查找图书对象。
 ```
 getters: {
     ...
@@ -749,7 +749,7 @@ getters: {
     }
 }
 ```
-可以使用箭头函数简化上述代码.如下:
+可以使用箭头函数简化上述代码。如下:
 ```
 getters: {
     ...
@@ -760,7 +760,7 @@ getters: {
 ```
 <p>{{ $store.getters.getBookById(2) }}</p>
 ```
-下面完成购物车中单项商品价格和所有商品总价的计算,单项商品价格是商品的价格乘以总量,总价是单项商品价格相加的结果.由于购物车中的商品是存储在store中的,因此单项商品价格和所有商品总价的计算应该通过getter完成,而不是直接在组件内定义计算属性来完成.
+下面完成购物车中单项商品价格和所有商品总价的计算,单项商品价格是商品的价格乘以总量,总价是单项商品价格相加的结果。由于购物车中的商品是存储在store中的,因此单项商品价格和所有商品总价的计算应该通过getter完成,而不是直接在组件内定义计算属性来完成。
 
 编辑store目录下的index.js文件,添加计算单项商品价格和所有商品总价的getter.代码如下:
 
@@ -785,9 +785,9 @@ const store = createStore({
     }
 })
 ```
-如果getter要接收参数,则需要getter返回一个函数来实现给getter传参.
+如果getter要接收参数,则需要getter返回一个函数来实现给getter传参。
 
-编辑Cart.vue,在computed选项中使用mapGetters()映射上述两个getter, 然后修改模板代码,完善单项商品价格计算和购物车中所有商品总价的计算.代码如下:
+编辑Cart.vue,在computed选项中使用mapGetters()映射上述两个getter, 然后修改模板代码,完善单项商品价格计算和购物车中所有商品总价的计算。代码如下:
 
 
 Cart.vue
@@ -834,7 +834,7 @@ computed: {
     })
 },
 ```
-下面实物购物车中商品数量加1和减1的功能,这个功能的实现和getter无关,因为要修改store中所存储的商品的数量,因此是通过mutation实现商品数量的变化.
+下面实物购物车中商品数量加1和减1的功能，这个功能的实现和getter无关,因为要修改store中所存储的商品的数量，因此是通过mutation实现商品数量的变化。
 
 编辑store目录下的index.js文件,修改后的代码如下所示:
 
@@ -851,7 +851,7 @@ mutations: {
     }
 },
 ```
-编辑Cart.vue,在methods选项中使用mapMutations()辅助函数映射incrementItemCount,并为减号按钮和加号按钮添加click事件的处理代码.修改后的代码如下所示:
+编辑Cart.vue,在methods选项中使用mapMutations()辅助函数映射incrementItemCount,并为减号按钮和加号按钮添加click事件的处理代码。修改后的代码如下所示:
 
 Cart.vue
 ```
@@ -876,11 +876,11 @@ methods: {
     }
 }
 ```
-运行项目,访问http://localhost:8080/, 随意增加某项商品的数量
+运行项目,访问http://localhost:8080/, 随意增加某项商品的数量。
 
 ## 16.7 action
 
-在定义mutation时,一条重要的原则就是mutation必须是同步函数.换句话,在mutation()处理器函数中,不能存在异步调用.例如:
+在定义mutation时,一条重要的原则就是mutation必须是同步函数。换句话,在mutation()处理器函数中,不能存在异步调用。例如:
 ```
 mutations: {
     someMutation (state) {
@@ -890,12 +890,12 @@ mutations: {
     }
 }
 ```
-在someMutation()函数中调用api.callAsyncMethod()方法,传入了一个回调函数,这是一个异步调用.记住,不要这么做,因为这会让调试变得困难.假设正在调试应用程序并查看devtool中的mutation日志,对于每个记录的mutation,devtool都需要捕捉到前一状态和后一状态的快照.然而,在上面的例子中,mutation中的api.callAsyncMethod()方法中的异步回调让这不可能完成.因为当mutation被提交的时候,回调函数还没有被调用,devtool也无法知道回调函数什么时候真正被调用.实质上,任何在回调函数中执行的状态的改变都是不可追踪的.
+在someMutation()函数中调用api.callAsyncMethod()方法,传入了一个回调函数，这是一个异步调用。记住,不要这么做,因为这会让调试变得困难.假设正在调试应用程序并查看devtool中的mutation日志,对于每个记录的mutation,devtool都需要捕捉到前一状态和后一状态的快照。然而，在上面的例子中,mutation中的api.callAsyncMethod()方法中的异步回调让这不可能完成。因为当mutation被提交的时候，回调函数还没有被调用，devtool也无法知道回调函数什么时候真正被调用。实质上，任何在回调函数中执行的状态的改变都是不可追踪的。
 
 如果确实需要执行异步操作,那么应该使用action.action类似于mutation,不同之处在于:
 
-+ action提交的是mutation,而不是直接变更状态.
-+ action可以包含任意异步操作.
++ action提交的是mutation,而不是直接变更状态。
++ action可以包含任意异步操作。
 
 一个简单的action如下所示:
 ```
@@ -917,9 +917,9 @@ const store = createStore({
     }
 })
 ```
-action处理函数接收一个与store实例具有相同方法和属性的context对象,因此可以利用该对象调用commit()方法提交mutation,或者通过context.state和context.getters访问state和getter.甚至可以用context.dispatch()调用其他的action.要注意的是,context对象并不是store实例本身.
+action处理函数接收一个与store实例具有相同方法和属性的context对象,因此可以利用该对象调用commit()方法提交mutation,或者通过context.state和context.getters访问state和getter。甚至可以用context.dispatch()调用其他的action。要注意的是,context对象并不是store实例本身.
 
-如果在action中需要多次调用commmit, 则可以考虑使用ES6中的结构语法简化代码.代码如下:
+如果在action中需要多次调用commmit, 则可以考虑使用ES6中的结构语法简化代码。代码如下:
 ```
 actions: {
     increment ({ commit }) {
@@ -930,11 +930,11 @@ actions: {
 
 ### 16.7.1 分发action
 
-action通过store.dispatch()方法分发.代码如下:
+action通过store.dispatch()方法分发。代码如下:
 ```
 store.dispatch('increment')
 ```
-action和mutation看似没什么区别,实际上,它们之间最大的区别就是action中可以包含异步操作.例如:
+action和mutation看似没什么区别,实际上,它们之间最大的区别就是action中可以包含异步操作。例如:
 ```
 actions: {
     incrementAsync ({ commit }) {
@@ -960,7 +960,7 @@ store.dispatch({
     amount: 10
 })
 ```
-一个实际的例子是购物车结算操作,该操作涉及调用一个异步API和提交多个mutation.代码如下:
+一个实际的例子是购物车结算操作,该操作涉及调用一个异步API和提交多个mutation。代码如下:
 ```
 actions: {
     chechout ({ commit, state }, produces) {
@@ -979,11 +979,11 @@ actions: {
     }
 }
 ```
-checkout执行一个异步操作流,并通过提交这些操作记录action的副作用(状态更改).
+checkout执行一个异步操作流，并通过提交这些操作记录action的副作用(状态更改)。
 
 ### 16.7.2 在组件中分发action
 
-在组件中可以使用this.$store.dispatch('XXX')方法分发action,或者使用mapActions()辅助函数将组件的方法映射为store.dispatch调用.代码如下:
+在组件中可以使用this.$store.dispatch('XXX')方法分发action，或者使用mapActions()辅助函数将组件的方法映射为store.dispatch调用。代码如下:
 
 store.js
 ```
@@ -1040,9 +1040,9 @@ export default {
 
 ### 16.7.3 组合action
 
-action通常是异步的,那么如何知道action何时完成?更重要的是,我们如何才能组合多个action来处理更复杂的异步流程呢?
+action通常是异步的，那么如何知道action何时完成?更重要的是，我们如何才能组合多个action来处理更复杂的异步流程呢？
 
-首先,要知道store.dispatch()方法可以处理被触发的action的处理函数返回的Promise,并且store.dispatch()方法仍旧返回Promise.例如:
+首先，要知道store.dispatch()方法可以处理被触发的action的处理函数返回的Promise，并且store.dispatch()方法仍旧返回Promise。例如:
 ```
 actions: {
     actionA ({ commit }) {
@@ -1072,7 +1072,7 @@ actions: {
     }
 }
 ```
-最后,如果使用store/await,则可以按以下方式组合action.
+最后,如果使用store/await,则可以按以下方式组合action。
 ```
 //假设getData()和getOtherData()返回的是Promise
 actions: {
@@ -1085,9 +1085,9 @@ actions: {
     }
 }
 ```
-一个store.dispatch()方法在不同模块中可以触发多个action处理函数.在这种情况下,只有当所有触发的处理函数完成后,返回的Promise才会执行.
+一个store.dispatch()方法在不同模块中可以触发多个action处理函数。在这种情况下,只有当所有触发的处理函数完成后,返回的Promise才会执行。
 
-下面给出一个简单的例子,如何组合action来处理异步流程.代码没有采用单文件组件,而是在HTML页面中直接编写,如下所示:
+下面给出一个简单的例子,如何组合action来处理异步流程。代码没有采用单文件组件,而是在HTML页面中直接编写,如下所示:
 
 ComposingActions.html
 ```
@@ -1181,4 +1181,209 @@ ComposingActions.html
     app.use(store).mount('#app');
 </script>
 ```
-我们在store中定义了两个状态数据:book对象和totalPrice,并为修改它们的状态分别定义了mutation:incrementQuantity和calculateTotalPrice,之后定义了两个action:incrementQuantity和updateBook,前者模拟异步操作提交incrementQuantity mutation修改图书数量;后者调用dispatch()方法触发前者的调用,在前者成功完成后,提交calculateTotalPrice mutation, 计算图书的总价.
+我们在store中定义了两个状态数据:book对象和totalPrice，并为修改它们的状态分别定义了mutation:incrementQuantity和calculateTotalPrice,之后定义了两个action:incrementQuantity和updateBook，前者模拟异步操作提交incrementQuantity mutation修改图书数量;后者调用dispatch()方法触发前者的调用，在前者成功完成后，提交calculateTotalPrice mutation，计算图书的总价。
+
+当单击“增加数量”按钮时，在addQuantity事件处理函数中触发的是updateBook action，而在该action方法中调用dispatch()方法触发incrementQuantity action, 等待后者的异步操作成功完成后（1s后更新了图书的数量），接着在then()方法中成功完成函数调用，提交calculateTotalPrice mutation, 计算图书总价，最终在页面渲染出图书新的数量和总价。
+
+本例只是用于演示如何组合action处理异步流程，并不具有实用价值，实际开发中对于本例完成的功能不要这么做。
+
+下面继续完善购物车程序。首先为商品加入购物车增加一个数量文本字段，并绑定到quantity属性上。编辑Cart.vue，添加的代码如下：
+```
+<table>
+    ...
+    <tr>
+        <td>商品价格</td>
+        <td><input type="text" v-model="price"></td>\
+    </tr>
+    <tr>
+        <td>数量</td>
+        <td><input type="text" v-mode.number="quantity"></td>
+    </tr>
+    <tr>
+        <td colspan="2"><button @click="addCart">加入购物车</button></td>
+    </tr>
+</table>
+```
+现在我们想实现当用户输入的商品编号与现有商品的编号相同时，在购物车中不断新增商品，而只是对现有商品累加数量。只有当用户添加新的商品时，才加入购物车中。这个功能的实现，就可以考虑放在action中去完成。
+
+编辑store目录下的index.js文件，在actions选项中定义一个加入商品到购物车的action。代码如下：
+
+store/index.js
+```
+import { createStore } from 'vuex'
+import books from '@/data/books.js'
+
+const store = createStore({
+    ...,
+    actions: {
+        addItemToCart(context, book) {
+            let item = context.state.items.find(item => item.id === book.id);
+            //如果添加的商品已经在购物车中存在，则只增加购物车中商品的数量
+            if(item) {
+                context.commit('incrementItemCount', book);
+            }
+        }
+    }
+})
+
+export default store
+```
+需要注意的是，在action中不要直接修改状态，而应该通过提交mutation更改状态。
+
+接下来编辑Cart.vue，通过分发addItemToCart这个action来实现商品加入购物车的完整功能。如下所示：
+
+Cart.vue
+```
+<script>
+import { mapMutations, mapState, mapGetters, mapActions } from 'vuex'
+
+export default {
+    methods: {
+        ...,
+        ...mapActions([
+            'addItemToCart'
+        ]),
+        addCart() {
+            //this.$store.dispatch('addItemToCart', {
+            this.addItemToCart({
+                id: this.id,
+                title: this.title,
+                price: this.price,
+                count: this.quantity,
+            })
+            this.id = '';
+            this.title = '';
+            this.price = '';
+        }
+    }
+};
+</script>
+```
+可以自行添加新商品和现有商品，测试一下购物车程序的运行情况。要提醒，在本例中，简单起见，我们对是否是现有商品仅通过商品的编号来判断，所以在添加商品时，只要编号相同我就认为是同一种商品。而在实际项目中，不会这么做。
+
+## 16.8 表单处理
+
+在表单控件上通过使用v-model指令进行数据绑定，如果绑定的数据是Vuex中的状态数据，就会遇到一些问题。如下所示：
+
+from.html
+```
+<div id="app">
+    <my-component></my-component>
+</div>
+
+<script src="https://unpkg.com/vue@next"></script>
+<script src="https://unpkg.com/vuex@next"></script>
+<script>
+    const app = Vue.createApp({});
+    const store = Vuex.createStore({
+        state() {
+            return {
+                message: 'Vue教程'
+            }
+        },
+        mutations: {
+            updateMessage(state, msg) {
+                state.message = msg;
+            }
+        }
+    })
+
+    app.component('MyComponent', {
+        computed: Vuex.mapState([
+            'message'
+        ]),
+        template: '<input type="text" v-model="message">'
+    });
+
+    app.use(store).mount('#app');
+</script>
+```
+当在文本控件中输入值时，v-model会试图直接修改message属性的值，这将引发一个警告：[Vue warn]:Write operation failed: computed property "message" is readonly,这是由于v-model的数据双向绑定机制决定的。我们希望用户输入数据时，调用mutation()处理函数修改store中的状态message,从而实现计算属性message的更新，那么可以采用两种方式来实现。
+
+(1)通过\<input\>元素使用v-bind绑定value属性，然后使用v-on监听input或change事件，在事件处理函数中提交mutation。如下所示：
+```
+...
+app.component('MyComponent', {
+    computed: Vuex.mapState([
+        'message'
+    ]),
+    methods: {
+        updateMessage(e) {
+            this.$store.commit('updateMessage', e.target.value)
+        }
+    },
+    template: '<input type="text" :value="message" @input="updateMessage">'
+});
+```
+相当于自己实现了v-model指令，代码有些繁琐。如果想用v-model，那么可以用第二种方式。
+
+(2)在6.1节介绍过，计算属性可以提供一个setter用于计算属性的修改。可以在set()函数中提交mutation。如下所示：
+```
+...
+app.component('MyComponent', {
+    computed: {
+        message: {
+            get() {
+                return this.$store.state.message;
+            },
+            set(value) {
+                this.$store.commit('updateMessage', value);
+            }
+        }
+    },
+    template: '<input type="text" v-model="message">'
+});
+```
+
+## 16.9 Vuex与组合API
+
+要在setup()函数中访问store，可以调用useStore()函数，这与在选项API中通过this.$store访问store是等价的。代码如下：
+```
+import { useStore } from 'vuex'
+
+export default {
+    setup() {
+        const store = useStore()
+    }
+}
+```
+如果要访问state和getters，则需要使用computed()函数创建计算属性，以保持响应性，这相当于使用选项API创建计算属性。代码如下：
+```
+import { computed } from 'vue'
+import { useStore } from 'vuex'
+
+export default {
+    setup() {
+        const store = useStore()
+
+        return {
+            // 在computed()函数中访问状态
+            count: computed(() => store.state.count),
+            //在computed()函数中访问getters
+            double: computed(() => store.getters.double)
+        }
+    }
+}
+```
+要访问mutation和action，只需在setup()函数中调动store对象的commit()和dispatch()函数。代码如下：
+```
+import { useStore } from 'vuex'
+
+export default {
+    setup() {
+        const store = useStore()
+
+        return {
+            //访问mutation
+            increment: () => store.commit('increment'),
+
+            //访问action
+            asyncIncrement: () => store.dispatch('asyncIncrement')
+        }
+    }
+}
+```
+
+## 16.10 模块
+
+Vuex使用单一状态树，
