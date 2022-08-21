@@ -110,3 +110,252 @@ app.mount('#app');
 ```
 
 ***13.renderTriggered***
+
+当虚拟DOM重新渲染被触发时调用.与renderTracked钩子类似,它也接收调试器事件作为参数,此事件告诉你是什么操作触发了重新渲染,以及该操作的目标对象和键.
+
+renderTriggered钩子的用法如下:
+```
+<div id="app">
+    <button v-on:click="addToCart">Add to cart</button>
+    <p>Cart({{ cart }})</p>
+</div>
+
+const app = Vue.createApp({
+    data() {
+        return {
+            cart: 0
+        }
+    },
+    renderTriggered({ key, target, type }) {
+        console.log({ key, target, type })
+    },
+    methods: {
+        addToCart() {
+            this.cart += 1
+            /* 这将导致renderTriggered调用
+            {
+                key: "cart",
+                target: {
+                    cart: 1
+                },
+                type: "set"
+            }
+            */
+        }
+    }
+})
+
+app.mount('#app');
+```
+需要注意的是,所有的生命周期钩子都自动将它们的this上下文绑定到实例,因此可以访问实例的数据,,计算属性和方法.这也意味着不能使用箭头函数定义一个生命周期方法(如created:()=>this.fetchTodos()),这是因为箭头函数绑定的是父上下文,在箭头函数中的this并不是期望的组件实例,this.fetchTodos()将是undefined.
+
+下面为例10-4的tab-comment组件添加生命周期钩子方法,直观感受一下组件的各个生命周期阶段.
+
+例10-5 lifecycle.html
+```
+app.component('tab-comment', {
+    template: '<div>这是一本好书</div>',
+    data() {
+        return {
+            count: 0
+        }
+    },
+    beforeCreate() {
+        console.log('---------' + 'beforeCreated' + '-----------')
+        console.log("$el: " + this.$el)
+        console.log(this.$data)
+        console.log("data.count: " + this.count)
+    },
+    created() {
+        console.log('---------' + 'created' + '-----------')
+        console.log("$el: " + this.$el)
+        console.log(this.$data)
+        console.log("data.count: " + this.count)
+    },
+    beforeMount() {
+        console.log('---------' + 'created' + '-----------')
+        console.log("$el: " + this.$el)
+        console.log(this.$data)
+        console.log("data.count: " + this.count)
+    },
+    mounted() {
+        console.log('---------' + 'mounted' + '-----------')
+        console.log("$el: " + this.$el)
+        console.log(this.$data)
+        console.log("data.count: " + this.count)
+    },
+    beforeUpdate() {
+        console.log('---------' + 'beforeUpdate' + '-----------')
+        console.log("$el: " + this.$el)
+        console.log(this.$data)
+        console.log("data.count: " + this.count)
+    },
+    updated() {
+        console.log('---------' + 'updated' + '-----------')
+        console.log("$el: " + this.$el)
+        console.log(this.$data)
+        console.log("data.count: " + this.count)
+    },
+    activated() {
+        console.log('---------' + 'activated' + '-----------')
+        console.log("$el: " + this.$el)
+        console.log(this.$data)
+        console.log("data.count: " + this.count)
+    },
+    deactivated() {
+        console.log('---------' + 'deactivated' + '-----------')
+        console.log("$el: " + this.$el)
+        console.log(this.$data)
+        console.log("data.count: " + this.count)
+    },
+    brforeUnmount() {
+        console.log('---------' + 'brforeUnmount' + '-----------')
+        console.log("$el: " + this.$el)
+        console.log(this.$data)
+        console.log("data.count: " + this.count)
+    },
+    unmounted() {
+        console.log('---------' + 'unmounted' + '-----------')
+        console.log("$el: " + this.$el)
+        console.log(this.$data)
+        console.log("data.count: " + this.count)
+    },
+})
+```
+我们在组件中添加了一个数据属性count和大部分生命周期钩子方法,$el是组件实例管理的根DOM元素,$data是组件实例观察的数据对象,组件实例代理了对其数据对象的属性的访问
+
+需要注意的是,上例的组件使用了\<keep-alive\>元素进行包裹,组件的状态会被缓存,这样当组件切换时,才会触发activated和deactivated两个钩子方法;如果去掉该元素,当组件切换时,先前的组件实例会被销毁,当切换回来时,又会重新创建该实例.
+
+接下来利用生命周期钩子实现loading事件,主要作用是界面渲染较慢时,或者向服务器请求一个比较耗时的操作时,给用户一个提示信息.
+
+将loading图片的加载,,显示,,销毁放在一个Javascript脚本中实现.代码如下所示:
+
+js/loading.js
+```
+const Loading = {
+    img: '',
+    init() {
+        img = document.createElement("img");
+        img.setAttribute("src", "./images/loading.gif);
+    },
+    show() {
+        document.body.appendChild(img);
+    },
+    close() {
+        if(img)
+            document.body.removeChild(img);
+    }
+}
+Loading.init();
+```
+接下来组件的beforeCreate钩子中显示loading图片,在created钩子中销毁loading图片.代码如下:
+
+lifecycle-loading.html
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.9 lifecycle-loading</title>
+</head>
+<body>
+    <div id="app">
+        <my-component></my-component>
+    </div>
+
+    <script src="js/loading.js"></script>
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({});
+        app.component('my-component', {
+            data: function() {
+                return {
+                    message: ''
+                }
+            },
+            template: '<p>{{ message }}</p>',
+            beforeCreate() {
+                Loading.show();
+            },
+            created() {
+                // 准备数据,例如,从服务器获取数据,当响应成功后,关闭loading,设置数据
+                //此处用setTimeout模拟耗时的操作
+                setTimeout(() => {
+                    Loading.close();
+                    this.message = "Vue教程";
+                }, 2000) 
+            }
+        });
+        app.mount('#app');
+    </script>
+</body>
+</html>
+```
+
+## 10.10 单文件组件
+
+在很多Vue项目中,全局组件使用app.component()方法定义,然后使用app.mount('#app')在页面内绑定一个容器元素.这种方式在很多小规模的项目中运作得很好,在这些项目里Javascript只是被用来加强特定的视图.然而,在更复杂的项目中,或者前端完全由Javascript驱动时,以下缺点将变得明显:
++ 全局定义强制要求每个组件的命名不能重复.
++ 字符串模板缺乏语法高亮显示,在HTML有多行的时候,需要用到反斜杠(\),或者ECMAScript6中的反引号(`),而后者依赖于支持ECMAScript6的浏览器
++ 没有CSS的支持意味着当HTML和Javascript被模块化为组件时,CSS明显被遗漏了.
++ 没有构建步骤,这限制了为只能使用HTML和ES5 Javacript,而不能使用预处理器,如Pug(以前的Jade)和Babel.
+
+在Vue.js中,可以使用单文件组件解决上述所有问题.在一个文件扩展名为.vue的文件编写组件,可以将组件模板代码以HTML的方式书写,同时Javascript与CSS代码也在同一个文件中编写.例如:
+```
+<template>
+    <div>
+        <ul class="item">
+            <li class="username">用户名: {{ post, user, username }},留言时间: {{ getTime }}</li>
+            <li class="title">主题: {{ post.title }}, </li>
+            <li>内容: {{ post.content }}</li>
+        </ul>
+    </div>
+</template>
+
+<script>
+export default {
+    name: 'postItem',
+    data() {
+        return {
+        }
+    },
+    props: ['post'],
+    computed: {
+        gstTime: function() {
+            let d = new Date(this.post.gstTime);
+            d.setHours(d.getHours() - 8);
+            return d.toLocaleString();
+        }
+    }
+}
+</script>
+<style scoped>
+.item {
+    border-top: solid 1px grey;
+    padding: 15px;
+    font-size: 14px;
+    color: grey;
+    line-height: 21px;
+}
+.username {
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 24px;
+    color: #009a61;
+}
+.title {
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 24px;
+    color: #009a61;
+}
+ul li {
+    list-style: none;
+}
+</style>
+```
+在单文件组件中编写CSS样式规则时,可以添加一个scoped属性.该属性的作用是限定CSS样式只作用于当前组件的元素,相当于是组件作用域的CSS
+
+## 10.11 杂项

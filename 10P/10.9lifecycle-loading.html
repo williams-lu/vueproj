@@ -1,0 +1,42 @@
+<!-- 10.9 lifecycle-loading -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.9 lifecycle-loading</title>
+</head>
+<body>
+    <div id="app">
+        <my-component></my-component>
+    </div>
+
+    <script src="js/loading.js"></script>
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({});
+        app.component('my-component', {
+            data: function() {
+                return {
+                    message: ''
+                }
+            },
+            template: '<p>{{ message }}</p>',
+            beforeCreate() {
+                Loading.show();
+            },
+            created() {
+                // 准备数据,例如,从服务器获取数据,当响应成功后,关闭loading,设置数据
+                //此处用setTimeout模拟耗时的操作
+                setTimeout(() => {
+                    Loading.close();
+                    this.message = "Vue教程";
+                }, 2000) 
+            }
+        });
+        app.mount('#app');
+    </script>
+</body>
+</html>
