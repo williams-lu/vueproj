@@ -1,0 +1,41 @@
+<!-- 10.11.3异步更新队列nextTick -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.11.3异步更新队列nextTick</title>
+</head>
+<body>
+    <div id="app">
+        <my-component></my-component>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({});
+        app.component('my-component', {
+            data() {
+                return {
+                    message: 'Vue教程'
+                }
+            },
+            methods: {
+                change() {
+                    this.message = 'VC++教程';
+                    console.log(this.$refs.msg.textContent);
+                }
+            },
+            template:
+            `<div>
+                <p ref="msg">{{ message }}</p>
+                <button @click="change">修改内容</button>
+            </div>`
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>

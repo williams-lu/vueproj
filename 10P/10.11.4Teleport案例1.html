@@ -1,0 +1,46 @@
+<!-- 10.11.4 Teleport案例1 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.11.4 Teleport案例1</title>
+</head>
+<body>
+    <div style="position: relative;">
+        <h3>Tooltips with Vue 3.0 Teleport</h3>
+        <div>
+            <modal-button></modal-button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+    const app = Vue.createApp({});
+    app.component('modal-button', {
+        template:
+        `<button @click="modalOpen = true">
+            Open full screen modal!
+        </button>
+
+        <div v-if="modalOpen" class="modal">
+            <div>
+                I'm a modal!
+                <button @click="modalOpen = false">
+                    Close
+                </button>
+            </div>
+        </div>
+        `,
+        data() {
+            return {
+                modalOpen: false
+            }
+        }
+    })
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!-- 10.11.1-3访问子组件实例或子元素 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.11.1-3访问子组件实例或子元素</title>
+</head>
+<body>
+    <div id="app">
+        <parent></parent>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({});
+
+        app.component('parent', {
+            mounted() {
+                // 访问子元素<input>,让其具有焦点
+                this.$refs.inputElement.focus();
+                // 访问子组件<child>的message数据属性
+                console.log(this.$refs.childComponent.message);
+            },
+            template: 
+                `<div>
+                    // 子元素
+                    <input ref="inputElement"><br>
+                    // 子组件
+                    <child ref="childComponent"></child>
+                </div>`
+        });
+
+        app.component('child', {
+            data() {
+                return {
+                    message: 'Vue教程'
+                }
+            },
+            template: '<p>{{ message }}</p>'
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!-- 10.11.1-4 Provide和Inject -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.11.1-4 Provide和Inject</title>
+</head>
+<body>
+    <div id="app">
+        <parent></parent>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({});
+
+        app.component('parent', {
+            data() {
+                return {
+                    msg: 'Vue教程'
+                }
+            },
+            methods: {
+                sayHello(name) {
+                    console.log("Hello, " + name);
+                }
+            },
+            provide() {
+                return {
+                    //数据message和sayHello方法可供后代组件访问
+                    message: msg,
+                    hello: this.sayHello
+                }
+            },
+            template: '<child/>'
+        });
+
+        app.component('child', {
+            // 接收message数据属性和hello方法
+            inject: ['message', 'hello'],
+            mounted() {
+                // 当自身的方法来访问
+                this.hello('zhangsan');
+            },
+            // 当自身的数据属性来访问
+            template: '<p>{{ message }}</p>'
+        });
+
+        const vm = app.mount('#app');
+    </script>
+</body>
+</html>

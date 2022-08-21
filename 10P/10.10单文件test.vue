@@ -1,7 +1,7 @@
 <template>
     <div>
         <ul class="item">
-            <li class="username">用户名: {{ post, user, username }},留言时间: {{ getTime }}</li>
+            <li class="username">用户名: {{ post.user.username }},留言时间: {{ gstTime }}</li>
             <li class="title">主题: {{ post.title }}, </li>
             <li>内容: {{ post.content }}</li>
         </ul>

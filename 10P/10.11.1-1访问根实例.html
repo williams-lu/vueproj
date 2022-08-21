@@ -1,0 +1,54 @@
+<!-- 10.11.1-1访问根实例案例1 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.11.1-1访问根实例</title>
+</head>
+<body>
+    <div id="app">
+        <parent></parent>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    price: 98
+                }
+            },
+            computed: {
+                totalPrice() {
+                    return this.price * 10;
+                }
+            },
+            methods: {
+                hello() {
+                    return "Hello, Vue教程";
+                }
+            }
+        });
+
+        app.component('parent', {
+            template: '<child></child>'
+        });
+
+        app.component('child', {
+            methods: {
+                accessRoot() {
+                    console.log("单价： " + this.$root.price);
+                    console.log("总价： " + this.$root.totalPrice);
+                    console.log(this.$root.hello());
+                }
+            },
+            template: '<button @click="accessRoot">访问根实例</button>'
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>

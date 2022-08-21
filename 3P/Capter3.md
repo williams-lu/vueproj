@@ -270,8 +270,8 @@ let book = {
         name: "web前端",
     }
 }
-// let { category: { name }} = book;  //局部变量名为name
-let { title, isbn, category: { name: category }} = book;
+// let { category: { name } } = book;  //局部变量名为name
+let { title, isbn, category: { name: category } } = book;
 console.log(title);  //Vue.js从入门到精通
 console.log(isbn);    //282828282828282
 console.log(category);    //web前端

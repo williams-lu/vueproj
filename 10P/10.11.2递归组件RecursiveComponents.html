@@ -1,0 +1,79 @@
+<!-- 10.11.2递归组件RecursiveComponents -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.11.2递归组件RecursiveComponents</title>
+</head>
+<body>
+    <div id="app">
+        <category-component :list="categories"></category-component>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const CategoryComponent = {
+            name: 'catComp',
+            props: {
+                list: {
+                    type: Array
+                }
+            },
+            data() {
+                return {
+                    count: 0
+                }
+            },
+            template: 
+            `
+            <ul>
+                <!-- 如果list为空,则表示没有子分类了,结束递归 -->
+                <template v-if="list">
+                    <li v-for="cat in list">
+                        {{ cat.name }}
+                        <catComp :list="cat.children"/>
+                    </li>
+                </template>
+            </ul>
+            `
+        }
+
+        const app = Vue.createApp({
+            data() {
+                return {
+                    categories: [
+                        {
+                            name: '程序设计',
+                            children: [
+                                {
+                                    name: 'Java',
+                                    children: [
+                                        {name: 'Java SE'},
+                                        {name: 'Java EE'},
+                                    ]
+                                },
+                                {
+                                    name: 'C++'
+                                }
+                            ]
+                        },
+                        {
+                            name: "前端架构",
+                            children: [
+                                { name: "Vue.js" },
+                                { name: "React" },
+                            ]
+                        }
+                    ]
+                }
+            },
+            components: {
+                CategoryComponent
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!-- 10.11.1-2访问父组件实例 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.11.1-2访问父组件实例</title>
+</head>
+<body>
+    <div id="app">
+        <parent></parent>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({});
+
+        app.component('parent', {
+            data() {
+                return {
+                    price: 188
+                }
+            },
+            computed: {
+                totalPrice() {
+                    return this.price * 10
+                }
+            },
+            methods: {
+                hello() {
+                    return "Hello, Vue教程"
+                }
+            },
+            template: '<child></child>'
+        });
+
+        app.component('child', {
+            methods: {
+                accessParent() {
+                    console.log("单价： " + this.$parent.price);
+                    console.log("总价： " + this.$parent.totalPrice);
+                    console.log(this.$parent.hello());
+                }
+            },
+            template: '<button @click="accessParent">访问父组件实例</button>'
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
