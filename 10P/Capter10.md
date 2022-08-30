@@ -1,8 +1,374 @@
 # 第10章 组件
 
+组件是Vue.js最核心的功能，在前端应用程序中可以采用模块化的开发，实现可重用、可扩展。组件是带有名字的可复用的实例，因此在根组件实例中的各个选项在组件中也一样可以使用。组件系统让我们可以使用独立可复用的小组件构建大型应用，几乎任意类型应用的界面都可以抽象为一个组件树。
+
+## 10.1 全局注册与本地注册
+
+与自定义指令类似，组建也有两种注册方式；全局注册与本地注册。
+全局注册组件使用应用程序实例的component()方法注册，该方法接受两个参数，
+第一个参数是组件的名字，第二个参数是一个函数对象，或者是一个选项对象。 
+
+语法形式
+```
+app.componet({string} name, {Funtion | Object} definition (optional) )
+```
+本地注册是在组件实例的选项对象中使用components选项注册
+
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>案例1</title>
+
+<body>
+
+    <div id="app">
+        <Button-Counter></Button-Counter>
+    </div>
+    <!-- <div id="app">
+        <button-counter></button-counter>
+    </div> -->
 
 
+    <!-- <div id="app">
+         <ButtonCounter></ButtonCounter>
+    </div> -->
 
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({});
+
+        app.component('ButtonCounter', {
+            data() {
+                return {
+                    count: 0
+                }
+            },
+
+            template: `
+                <button @click="count++">
+                    You clicked me {{ count }} times.
+                </button>`
+        });
+
+        app.mount('#app');
+    </script>
+
+</body>
+</html>
+```
+组件的内容通过template选项定义，当使用组件时，组件所在的位置将被template选项的内容所替换。
+
+组件的使用，把组件当成自定义元素
+```
+<div id="app">
+    <ButtonCounter></ButtonCounter>
+</div>
+```
+上述代码不能生效，因为要在HTML并不区分元素和属性的大小写，所以浏览器会把所有大小写字符解释为小写字符，即buttoncounter，
+而注册时使用的名称是ButtonCounter，这就导致了找不到组件而出现错误。解决办法就是在DOM模板中采用kebab-case命名引用组件。
+```
+<div id="app">
+    <button-counter></button-counter>
+</div>
+```
+只要组件注册时采用的是PascalCase（首字母大写）命名，就可以采用kebab-case命名来引用。
+不过在非DOM模板中（如字符串模板或单文件组件内），是可以使用组件的原始名称的，即\<ButtonCounter\>和\<button-counter\>
+都可以。如果想要保持名字的统一性，也可以在注册组件时，直接使用kebab-case命名组件。
+```
+app.component('button-counter', ...)
+```
+此外，由于HTML并不支持自闭合的自定义元素，所以在DOM模板中不要把ButtonCounter组件当作自闭合元素使用。例如不要使用
+\<button-counter/\>，而是\<button-counter\>\</button-counter\>。在非DOM模板中没有这个限制，相反，还鼓励将没有内容的组件作为自闭合元素来使用，这可以明确该组件没有内容，由于省略了结束标签，代码也更简洁。
+
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>案例2</title>
+</head>
+<body>
+        
+    <div id="app">
+        <button-counter></button-counter>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const MyComponent = {
+            data() {
+                return {
+                    count: 0
+                }
+            },
+            template:
+                `<button v-on:click="count++">
+                    You clicked me {{ count }} times.
+                </button>`
+        };
+    
+        const app = Vue.createApp({
+            components: {
+                ButtonCounter: MyComponent
+            }
+        }).mount('#app');
+    </script>
+
+</body>
+</html>
+```
+对于component选项对象，它的每个属性的名称就是自定义元素的名称，其属性值就是这个组件的选项对象。
+
+全局注册组件可以在该应用程序中的任何组件实例的模板中使用，而局部注册组件只能在父组件的模板中使用。
+
+## 10.2 使用prop向子组件传递数据
+
+组件时当作自定义元素来使用的，元素一般是有属性的，同样，组件也是有属性。在使用组件时，当组件元素设置属性，组件内部如何接收呢？首先需要在组件内部注册一些自定义的属性，成为prop，这些prop是在组件的props选项中定义的；之后，在使用组件时，就可以将这些prop的名称作为元素的属性名来使用，通过属性向组件传递数据，这些数据作为组件实例的属性被使用。
+
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.2章案例</title>
+</head>
+<body>
+    <div id="app">
+        <post-item post-title="Vue 完税"></post-item>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({});
+        app.component('PostItem', {
+            //声明props
+            props: ['postTitle'],
+                //postTitle就像data中定义的数据属性一样，
+                //在该组件中可以如"this.postTitle"这样使用
+                template: '<h3>{{ postTitle }}</h3>'
+        });
+        app.mount('#app');
+    </script>
+</body>
+</html>
+```
+说明：
+
+1. 正如代码注释中所述，在props选项中定义的prop，可以作为组件实例的数据属性使用。
+2. props选项中声明的每一个prop，，在使用组件时，作为元素的自定义属性使用，属性值会被传递给组件内部的prop。
+3. 已不止一次提到过，HTML中的属性名是不区分大小写的，浏览器在加载HTML页面的时候，会统一转换成小写字符，采用camelCase（驼峰命名法）的prop名要使用其等价的kebab-case（短横线分隔命名）名称。如果在字符串模板中或单文件组件内使用，则没有这个限制。
+
+说明3例子展示
+
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.2章案例</title>
+</head>
+<body>
+    <div id="app">
+        <post-list></post-list>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({});
+
+        const PostItem = {
+            props: ['postTitle'],
+            template: '<h3>{{ postTitle }}</h3>'
+        };
+
+        app.component('PostList', {
+            components: {
+                PostItem
+            },
+            //在字符串模板中可以直接使用PascalCase命名的组件名，
+            //和camelCase命名的prop名
+            template: '<div><PostItem postTitle="Vue 玩水" /></div>'
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
+```
+在本地注册组件中，使用了ES6的属性初始值的简写语法。
+
+在字符串模板中，除了各种命名可以直接使用外，组件还可以作为自闭合元素使用。
+
+下面修改一下PostList组件，给它定义一个数据属性title，然后用title的值给子组件PostItem的postTitle属性赋值。
+
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.2章案例</title>
+</head>
+<body>
+    <div id="app">
+        <post-list></post-list>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({});
+
+        const PostItem = {
+            props: ['postTitle'],
+            template: '<h3>{{ postTitle }}</h3>'
+        };
+        
+        app.component('PostList', {
+            data() {
+                return {
+                    title: 'Vue 睇水 回水 跺水 潲水'
+                }
+            },
+            components: {
+                PostItem
+            },
+            template: '<div><PostItem :postTitle="title"></PostItem></div>'       //改动后
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
+```
+渲染的结果是 \<h3\>title\</h3\>。为什么没有输出title属性？因为在解析的时候，title并没有作为表达式来解析，而仅仅是作为一个静态的字符串传递给PostTitle属性。与普通HTML元素的属性传值一样，想要接收动态值，需要使用v-bind指令，否则，接收的值都是静态的字符串值。
+
+修改PostList组件的模板字符串，代码如下：
+```
+template: '<div><PostItem :postTitle="title"></PostItem></div>'
+```
+输出结果：
+```
+<h3>Vue 睇水 回水 跺水 潲水</h3>
+```
+如果组件需要接收多个传值，那么可以定义多个prop。代码如下所示：
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.2章案例3</title>
+</head>
+<body>
+    <div id="app">
+        <post-list></post-list>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({});
+
+        const PostItem = {
+            props: ['author', 'title', 'content'],
+            template: `
+            <div>
+                <h3>{{ title }}</h3>
+                <p> 作者：{{ author }}</p>
+                <p>{{ content }}</p>
+            </div>`
+        };
+        
+        app.component('PostList', {
+            data() {
+                return {
+                    author: '孙鑫',
+                    title: 'Vue教程',
+                    content: '书不错',
+                }
+            },
+            components: {
+                PostItem
+            },
+            template: `
+            <div>
+                <PostItem
+                    :author="author"
+                    :title="title"
+                    :content="content">
+                </PostItem>
+            </div>`
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
+```
+从例子可以看到，如果子组件定义的prop较多，调用时就需要写较多的属性，然后一一赋值，显然不科学。为此，可以使用不带参数的v-bind命令传入一个对象，只需要将该对象的属性和组件的prop一一对应即可。代码如下：
+```
+app.component('PostList', {
+    data() {
+        return {
+            post: {
+                author: '孙鑫',
+                title: 'Vue教程',
+                content: '书不错',
+            }
+        }
+    },
+    template: '<div><PostItem v-bind="post" /></div>'
+});
+```
+在data中，定义了一个post对象，它的属性值是和PostItem的prop一一对应。在\<PostItem\>元素上使用了不带参数的v-bind指令，传入post对象，该对象的所有属性将作为post传入。
+
+虽然直接传入一个对象，将其所有属性值作为prop传入可以简化代码的编写，但也容易造成一些混乱，而在实际业务组件开发时，子组件通常是以对象接收数据，父组件以对象的方式传值。示例代码：
+```
+const app = Vue.createApp({});
+
+const PostItem = {
+    props: ['post'],
+    template: `
+    <div>
+        <h3>{{ post.title }}</h3>
+        <p> 作者：{{ post.author }}</p>
+        <p>{{ post.content }}</p>
+    </div>`
+};
+
+app.component('PostList', {
+    data() {
+        return {
+            post: {
+                author: '孙鑫',
+                title: 'Vue教程',
+                content: '书不错',
+            }
+        }
+    },
+    template: '<div><PostItem :post="post" /></div>'
+});
+```
+### 10.2.1 单向数据流
+
+通过prop传递数据是单向的，父组件的属性变化会向下传递给子组件，但是反过来不行。这可以防止子组件意外改变父组件的状态，从而导致应用程序的数据流难以理解。
+
+每次父组件更新时，子组件中的所有prop都会刷新为最新的值。这意味着不应该在一个子组件内去改变prop，如果这样做，则Vue会在Chrome浏览器的Console窗口中给出警告。
+
+下面两种情况下可能需要改变组件的prop。
+
+第一种情况是定义一个prop，以方便父组件传递初始值，在子组件内将这个prop作为一个本地的数据使用。遇到这种情况的解决办法是定义一个本地的data属性，然后将prop的值作为其初始值，后续操作只访问这个data属性。代码如下：
 
 
 

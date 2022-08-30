@@ -1386,9 +1386,9 @@ export default {
 
 ## 16.10 模块
 
-Vuex使用单一状态树，应用程序的所有状态都包含在一个大的对象中,当应用变得复杂时,store对象就会变得非常臃肿.
+Vuex使用单一状态树，应用程序的所有状态都包含在一个大的对象中,当应用变得复杂时,store对象就会变得非常臃肿。
 
-为了解决这个问题,Vuex允许将store划分为多个模块,每个模块可以包含自己的state,,mutations,,actions,,getters及嵌套的子模块.例如:
+为了解决这个问题,Vuex允许将store划分为多个模块,每个模块可以包含自己的state、mutations、actions、getters及嵌套的子模块。例如:
 ```
 const moduleA = {
     state: () => ({ ... }),
@@ -1413,7 +1413,7 @@ const store = createStore({
 store.state.a // -> moduleA的状态
 store.state.b // -> moduleB的状态
 ```
-对于模块内部的mutations和getters,接收的第一个参数是模块的局部状态对象.代码如下:
+对于模块内部的mutations和getters,接收的第一个参数是模块的局部状态对象。代码如下:
 ```
 const moduleA = {
     state: () => ({
@@ -1433,7 +1433,7 @@ const moduleA = {
     }
 }
 ```
-同样地,对于模块内部的actions,局部状态通过context.state暴露出来,跟节点状态则为context.rootState.代码如下:
+同样地,对于模块内部的actions,局部状态通过context.state暴露出来,跟节点状态则为context.rootState。代码如下:
 ```
 const moduleA = {
     // ...
@@ -1446,7 +1446,7 @@ const moduleA = {
     }
 }
 ```
-对于模块内部的getters,根节点状态将作为第3个参数暴露出来.代码如下:
+对于模块内部的getters,根节点状态将作为第3个参数暴露出来。代码如下:
 ```
 const moduleA = {
     // ...
@@ -1467,9 +1467,9 @@ const moduleA = {
         |---cart.js    # 购物车模块
         |---products.js # 产品模块
 ```
-在默认情况下,模块内部的action,,mutation和getters是注册在全局命名空间下的,这使多个模块能够对同一mutation或action做出响应.
+在默认情况下,模块内部的action、mutation和getters是注册在全局命名空间下的,这使多个模块能够对同一mutation或action做出响应.
 
-如果希望模块具有更高的封装度和复用度,则可以通过添加namespaced:true的方式使其成为带命名空间的模块.当模块被注册后,它的所有mutation,,action和getters都会根据模块注册的路径自动命名.例如:
+如果希望模块具有更高的封装度和复用度,则可以通过添加namespaced:true的方式使其成为带命名空间的模块.当模块被注册后,它的所有mutation、action和getters都会根据模块注册的路径自动命名.例如:
 ```
 
 ```

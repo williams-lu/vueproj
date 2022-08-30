@@ -1,6 +1,4 @@
-<!-- 在字符串模板中，除了各种命名可以直接使用外，组件还可以作为自闭合元素使用。
-下面修改一下PostList组件，给它定义一个数据属性title，然后用title的值给子组件
-PostItem的postTitle属性赋值。 -->
+<!-- 10.2 案例3 -->
 
 
 <!DOCTYPE html>
@@ -52,9 +50,5 @@ PostItem的postTitle属性赋值。 -->
         app.mount('#app');
 
     </script>
-
-    <!-- 渲染的结果是 <h3>title</h3>。为什么没有输出title属性？因为在解析的时候，title并
-    没有作为表达式来解析，而仅仅是作为一个静态的字符串传递给PostTitle属性。与普通HTML元素
-    的属性传值一样，想要接收动态值，需要使用v-bind指令，否则，接收的值都是静态的字符串值。-->
 </body>
 </html>

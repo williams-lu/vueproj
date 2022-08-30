@@ -11,8 +11,6 @@ app.componet({string} name, {Funtion | Object} definition (optional) )
 
 本地注册是在组件实例的选项对象中使用components选项注册
 -->
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -54,32 +52,6 @@ app.componet({string} name, {Funtion | Object} definition (optional) )
         });
 
         app.mount('#app');
-
-
-    // 组件的内容通过template选项定义，当使用组件时，组件所在的位置将被template选项的内容所替换
-    
-    // 组件的使用，把组件当成自定义元素 
-    // <div id="app">
-    //     <ButtonCounter></ButtonCounter>
-    // </div>
-    // 上述代码不能生效，因为要在HTML并不区分元素和属性的大小写，所以浏览器会把所有大小写字符解释为小写字符，即buttoncounter，
-    // 而注册时使用的名称是ButtonCounter，这就导致了找不到组件而出现错误。解决办法就是在DOM模板中采用kebab-case命名引用组件。
-
-    // <div id="app">
-    //     <button-counter></button-counter>
-    // </div>
-
-    // 只要组件注册时采用的是PascalCase（首字母大写）命名，就可以采用kebab-case命名来引用。
-    // 不过在非DOM模板中（如字符串模板或单文件组件内），是可以使用组件的原始名称的，即<ButtonCounter>和<button-counter>
-    // 都可以。如果想要保持名字的统一性，也可以在注册组件时，直接使用kebab-case命名组件。
-
-    // app.component('button-counter', ...)
- 
-    // 此外，由于HTML并不支持自闭合的自定义元素，所以在DOM模板中不要把ButtonCounter组件当作自闭合元素使用。例如不要使用
-    // <button-counter/>，而是<button-counter></button-counter>。在非DOM模板中没有这个限制，相反，还鼓励将没有内容的
-    // 组件作为自闭合元素来使用，这可以明确该组件没有内容，由于省略了结束标签，代码也更简洁。
-    //请参见10.1全局注册与本地注册案例2 
-
     </script>
 
 </body>

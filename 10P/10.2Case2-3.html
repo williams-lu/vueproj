@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.2章案例3</title>
+</head>
+<body>
+    <div id="app">
+        <post-list></post-list>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({});
+
+        const PostItem = {
+            props: ['author', 'title', 'content'],
+            template: `
+            <div>
+                <h3>{{ title }}</h3>
+                <p> 作者：{{ author }}</p>
+                <p>{{ content }}</p>
+            </div>`
+        };
+        
+        app.component('PostList', {
+            data() {
+                return {
+                    author: '孙鑫',
+                    title: 'Vue教程',
+                    content: '书不错',
+                }
+            },
+            components: {
+                PostItem
+            },
+            template: `
+            <div>
+                <PostItem
+                    :author="author"
+                    :title="title"
+                    :content="content">
+                </PostItem>
+            </div>`
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
