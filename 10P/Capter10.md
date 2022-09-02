@@ -369,8 +369,137 @@ app.component('PostList', {
 下面两种情况下可能需要改变组件的prop。
 
 第一种情况是定义一个prop，以方便父组件传递初始值，在子组件内将这个prop作为一个本地的数据使用。遇到这种情况的解决办法是定义一个本地的data属性，然后将prop的值作为其初始值，后续操作只访问这个data属性。代码如下：
+```
+props: ['initialCounter'],
+data: function () {
+    return {
+        counter: this.initialCounter
+    }
+}
+```
+第二种情况是prop接收数据后需要转换后使用。在这种情况下，可以使用计算属性解决。代码示例如下：
+```
+props: ['size'],
+computed: {
+    normalizedSize() {
+        return this.size.trim().toLowerCase()
+    }
+}
+```
+后续的操作直接访问计算机属性normalizedSize。
 
+>注意：
+>Javacript中对象和数组是通过引用传入的，所以对于一个数组或对象类型的prop,在子组件中改变这个对象或数组本身将影响到父组件的状态。
 
+### 10.2.2 prop验证
+
+当开发一个通用组件时，我们希望父组件通过prop传递的数据类型是符合要求的。例如，组件定义的一个prop是数组类型，，结果父组件传的是一个字符串类型的值，这显然不合适。为此，Vue也提供了prop的验证机制，在定义props选项时，用一个带验证需求的对象代替之前，一直使用的字符串数组(props:['author', 'tilte', 'content'])。代码如下：
+```
+app.component('my-component', {
+    props: {
+        //基本类型检查（'null'和'undefined'会通过任何类型验证）
+        age: Number,
+        //多个可能的类型
+        tel: [String, Number],
+        //必填的字符串
+        username: {
+            type: String,
+            required: true
+        },
+        //具有默认值的数字
+        sizeOfPage: {
+            type: Number,
+            default: 10
+        },
+        //具有默认值的对象
+        greeting: {
+            type: Object,
+            //对象或数组默认值必从一个工厂函数获取
+            default: function () {
+                return { message: 'hello' }
+            }
+        },
+        //自定义函数验证
+        info: {
+            validator: function (value) {
+                //这个值必须匹配下列字符串中的一个
+                return ['success', 'warning', 'danger'].indexOf(value) !== -1
+            }
+        },
+        //具有默认值的函数
+        msg: {
+            type: Funtion,
+            //与对象或数组默认值不同，这不是一个工厂函数，而是一个用作默认值的函数
+            default: function () {
+                return 'Default function'
+            }
+        }
+    }
+})
+```
+当prop验证失败时，在开发板中，Vue会在Console中抛出一个警告。
+
+>注意：<br>
+>prop类型发证在组件实例创建之前，因此实例的属性（如data、计算属性等）在default或validator函数中是不可用的。
+
+验证的类型（type）可以是下列原生构造函数中的一个：
++ String
++ Number
++ Boolean
++ Array
++ Object
++ Date
++ Function
++ Symbol
+
+此外，type还可以是一个自定义的构造函数。代码如下：
+```
+function Person (firstname, lastname) {
+    this.firstname = firstname
+    this.lastname = lastname
+}
+
+app.component('blog-post', {
+    props: {
+        //验证author的值是否是通过new Person创建的
+        author: Person
+    }
+})
+```
+
+### 10.2.3 非prop的属性
+
+在使用组件时，组件的使用者可能会向组件传入未定义prop的属性。在Vue.js中，这也是被允许的，常见的例子包括class、sytle和id属性，可以通过$attrs访问这些属性。
+
+当组件返回单个节点时，非prop的属性将自动添加到根节点的属性中。
+
+1. 属性继承
+请看代码:
+```
+<style>
+    .child {
+        background-color: red;
+    }
+
+    .parent {
+        opacity: 0.5;
+    }
+</sytle>
+
+<div id="app">
+    <my-input type="text" class="parent"></my-input>
+</div>
+
+<script>
+    const app = Vue.createApp({});
+    app.component('MyInput', {
+        template: '<input class="child">'
+    });
+
+    app.mount('#app');
+</script>
+```
+MyInput组件没有定义任何的prop，根元素是\<input\>, 在DOM模板中使用\<my-input\>元素时设置了type属性，这个属性将被添加到MyInput组件的根元素\<input\>上，
 
 ## 10.9 组件的生命周期
 
