@@ -388,7 +388,7 @@ computed: {
 ```
 后续的操作直接访问计算机属性normalizedSize。
 
->注意：
+>注意：<br>
 >Javacript中对象和数组是通过引用传入的，所以对于一个数组或对象类型的prop,在子组件中改变这个对象或数组本身将影响到父组件的状态。
 
 ### 10.2.2 prop验证
@@ -499,7 +499,223 @@ app.component('blog-post', {
     app.mount('#app');
 </script>
 ```
-MyInput组件没有定义任何的prop，根元素是\<input\>, 在DOM模板中使用\<my-input\>元素时设置了type属性，这个属性将被添加到MyInput组件的根元素\<input\>上，
+MyInput组件没有定义任何的prop，根元素是\<input\>, 在DOM模板中使用\<my-input\>元素时设置了type属性，这个属性将被添加到MyInput组件的根元素\<input\>上，渲染结果为\<input type="text"\>。此外，在MyInput组建的模板中还使用了class属性，同时在DOM模板中也设置了class属性，在这种情况下，两个class属性的值会被合并，最终渲染为\<input class="clild parent" type="text"\>。需要注意的是，只有class和style属性的值会合并，对于其他属性，从外部提供给组件的值会替代掉组件内部设置好的值。假设MyInput组件的模板是\<input type="text"\>, 如果父组件传入type="checkbox",就会替代掉type="text", 最后渲染结果就变成了\<input type="checkbox"\>。
+
+2. 禁用属性继承
+
+如果不希望组件自动继承属性，可以在组件的选项中设置inheritAttrs:false。例如：
+```
+app.component('my-component', {
+    inheritAttrs: false,
+    // ...
+})
+```
+禁用属性继承的常见情况是需要将属性应用于根节点之外的其他元素。将inheritAttrs选项设置为false后，可以通过使用组件的$attrs属性将在组件上设置的属性应用到其他元素上。代码如下：
+```
+<data-picker data-status="activated"></data-picker>
+
+app.component('data-picker', {
+    inheritAttrs: false,
+    template: `
+        <div class="data-picker">
+            <input type="datetime" v-bind="$attrs" />
+        </div>
+    `
+})
+```
+3. 多个根节点上的属性继承
+与单个根节点组件不同，具有多个根节点的组件无法自动继承属性，需要显式地在指定元素上绑定$attrs属性，如果没有绑定，会发出运行时警告。代码如下所示：
+```
+<custom-layout id="custom-layout" @click="changeValue"></custom-layout>
+
+app.component('custom-layout', {
+    template: `
+        <header>...</header>
+        <main v-bind="$attrs">...</main>
+        <footer>...</footer>
+    `
+})
+```
+custom-layout组件最终渲染结果如下：
+```
+        <header>...</header>
+        <main id="custom-layout">...</main>
+        <footer>...</footer></div>
+```
+如果\<main\>元素上单击，将触发父组件实例的changeValue()方法。
+
+### 10.3 监听子组件事件
+
+前面介绍了父组件可以通过prop向子组件传递数据，反过来，子组件的某些功能需要与父组件进行通信，那该如何实现？
+
+在Vue.js中，这是通过自定义事件实现的。子组件使用$emit()方法触发事件，父组件使用v-on指令监听子组件的自定义事件。$emit()方法的语法形式如下。
+```
+$emit( eventName, [...args] )
+```
+eventName为事件名，args为附加参数，这些参数会传给事件监听器的回调函数。如果子组件需要向父组件传递参数，就可以通过第二个参数来传。
+
+例如如下子组件：
+```
+app.component('child', {
+    data: function () {
+        return {
+            name: '张三'
+        }
+    },
+    methods: {
+        handleClick() {
+            //调用实例的$emit()方法触发自定义事件greet，并传递参数
+            this.$emit('greet', this.name);
+        }
+    },
+    template: '<button @click="handleClick">开始欢迎</button>'
+})
+```
+子组件的按钮接收到click时间后，调用$emit()方法触发一个自定义事件。使用组件时，可以使用v-on指令监听greet事件。代码如下：
+```
+<div id="app">
+    <child @greet="sayHello"></child>
+</div>
+
+const app = Vue.createApp({
+    methods: {
+        //自定义事件的附加参数会自动传入方法
+        sayHello(name) {
+            alert("Hello, " + name)
+        }
+    }
+});
+```
+与组件和prop不同，事件名不提供任何自动大小写转换。调用$emit()方法触发的事件名称与用于监听该事件名称要完全匹配。
+
+如果在v-on指令中直接使用JavaScript语句，则可以通过$event访问自定义事件的附加参数。例如，在子组件中：
+```
+<button @click="$emit('enlarge-text', 0.1)">
+    Enlarge text
+</button>
+```
+在父组件的模板中：
+```
+<blog-post ... @enlarge-text="postFontSize += $event"></blog-post>
+```
+下面看一个实际的例子。通过帖子列表功能设计两个组件，实现一个BBS项目：PostList和PostListItem，PostList负责整个帖子列表的渲染，PostListItem负责单个帖子的渲染。帖子列表数据在PostList组件中维护，当增加新帖子或删除旧帖子时，帖子列表数据会发生变化，从而引起整个列表数据的重新渲染。这里有一个问题，就是每一个帖子都有一个“点赞”按钮，当单击按钮时，点赞数加1。对于单个帖子，除了点赞数要变化外，其他信息（如标题、发帖人等）都不会发生变化，，那么如果在PostListItem中维护点赞数，状态的管理就会比较混乱，子组件和父组件都会发生状态变化，显然这不是很合理。为此，我们决定在PostList中维护点赞数，而把PostListItem设计成无状态组件，这样所有的状态变化都在父组件中维护。“点赞”按钮在子组件中，为了向父组件通知单击事件，可以使用自定义事件的方式，通过$emit()方法触发，父组件通过v-on指令监听自定义事件。代码如下：
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.3监听子组件事件</title>
+</head>
+<body>
+    <div id="app">
+        <post-list></post-list>
+    </div>
+
+    <script>
+        const app = Vue.createApp({});
+
+        //子组件
+        const PostListItem = {
+            methods: {
+                handleVote() {
+                    //触发自定义事件
+                    this.$emit('vote');
+                }
+            },
+            props: ['post'],
+            template: 
+            `
+                <li>
+                    <p>
+                        <span>标题： {{ post.title }} | 发帖人：{{ post.author }} | 发帖时间： {{ post.date }} | 点赞数： {{ post.vote }}</span>
+                    <p>
+                <li>
+            `
+        };
+        // 父组件
+
+        app.component('PostList', {
+            data() {
+                return {
+                    posts: [
+                        { id: 1, title: '《Servlet/JSP深入详解》', author: '张三', date: '2019-10-21 20:10:15', vote: 0 },
+                        { id: 1, title: '《VC++深入详解》', author: '李四', date: '2019-10-11 20:10:15', vote: 0 },
+                        { id: 1, title: '《Vue深入详解》', author: '王五', date: '2020-10-21 20:10:15', vote: 0 },
+                    ]
+                }
+            },
+            components: {
+                PostListItem
+            },
+            methods: {
+                //自定义事件vote的事件处理器方法
+                handleVote(id) {
+                    this.posts.map(item => {
+                        item.id === id ? { ...item, vote: ++item.vote } : item;
+                    })
+                }
+            },
+            template:
+            `
+                <div>
+                    <ul>
+                        <PostListItem
+                            v-for="post in posts"
+                            :key="post.id"
+                            :post="post"
+                            @vote="handleVote(post.id)"/> <!-- 监听自定义事件 -->
+                    </ul>
+                </div>
+            `
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
+```
+在子组件中触发的事件可以在emits选项中进行定义。例如：
+```
+app.component('custom-form', {
+    emits: ['in-focus', 'submit', ]
+})
+```
+如果在emits选项中定义了原生事件（如click事件），那么将使用组件事件而不是原生事件监听器。
+
+Vue3.0删除了v-on指令的.native修饰符，该修饰符用于让组件可以监听原生事件，而现在，Vue3.0会把子组件上中未定义为组件触发的事件的所有事件监听器作为原生事件侦听器添加到子组件的根元素上（除非在子组件的选项中设置了inheritAttrs: false)。
+
+建议在组件中定义所有要触发的事件，以便可以更好地记录组件应该如何工作。
+
+与prop的类型验证类似，也可以采用对象语法而不是数组语法为定义的事件进行验证。要添加验证，需要为事件分配一个函数，该函数接收传递给$emit调用的函数，并返回一个布尔值以指示事件是否有效。代码如下：
+```
+app.component('custom-form', {
+    emits: {
+        //无验证
+        click: null,
+
+        //验证submit事件
+        submit: ({ email, password }) => {
+            if (email && password) {
+                return true
+            } else {
+                console.warn('Invalid submit event payload!')
+                return false
+            }
+        }
+    },
+    methods: {
+        submitForm() {
+            this.$emit('submit', { email, password})
+        }
+    }
+})
+```
+
+### 10.4 在组件上使用v-model指令
+
+
 
 ## 10.9 组件的生命周期
 
