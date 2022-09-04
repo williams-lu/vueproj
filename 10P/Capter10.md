@@ -978,6 +978,241 @@ app.component('MyInput', {
 });
 ```
 
+## 10.5 实例：combobox
+
+很多界面UI库都有组合框（combobox），它是由一个文本框和下拉框组成的，HTML远程的表单控件中时没有组合框的，不过我们可以利用提供的组件功能自己实现一个组合框。
+
+下面是文本框、下拉框的组合案例，10.5combobox.html:
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combobox</title>
+</head>
+<body>
+    <div id="app">
+        <combobox 
+            label="请选择了解信息的渠道"
+            :list="['报纸','网络','朋友介绍']"
+            v-model="selectedVal">
+        </combobox>
+        <span>选中的值是： {{ selectedVal }}</span>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    selectedVal: ''
+                }
+            }
+        });
+
+        app.component('combobox', {
+            props: ['label','list','modelValue'],
+            template: `
+                <div>
+                    <label style="float: left;">
+                        {{ label }}
+                    </label>
+                    <table>
+                        <tr>
+                            <td>
+                                <input 
+                                    :value="modelValue"
+                                    @input="$emit('update:modelValue',$event.target.value)">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <select
+                                    :value="modelValue"
+                                    @change="$emit('update:modelValue',$event.target.value)">
+                                    <option disabled value="">请选择</option>
+                                        <option v-for="item in list" :value="item">
+                                            {{item}}
+                                        </option>
+                                </select>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            `
+        })
+        app.mount('#app');
+    </script>
+</body>
+</html>
+```
+组建部分请结合10.4章节一起看。combobox组件还有需要完善的地方，如list属性现在只能接收数组，也应该允许能够接收一个对象，然后用对象属性名作为\<option\>元素value属性的值，用对象属性的值作为\<option\>元素的内容，可以自行完善代码。
+
+## 10.6 使用插槽分发内容
+
+组件是当作自定义元素使用的，元素可以有属性和内容，通过组件定义的prop接收属性值，可以解决属性问题，那么内容呢？可以通过\<slot\>元素解决。此外，插槽（slot）也可以作为父子组件之间通信的另一种实现方式。
+
+下面是一个简单的自定义组件。
+```
+Vue.component('greeting', {
+    template: '<div><slot></slot></div>'
+})
+```
+在组件模板中，\<div\>内部元素使用了一个\<slot\>元素，可以把这个元素理解为占位符。
+
+使用该组件的代码如下：
+```
+<greeting>Hello,Vue.js</greeting>
+```
+\<greeting\>元素在给出了内容，在渲染组件时，这个内容会置换组件内部的\<slot\>元素。最终渲染结果如下：
+```
+<div>Hello, Vue.js</div>
+```
+
+### 10.6.1 编译作用域
+
+如果想通过插槽向组件传递动态数据。例如：
+```
+<greeting>Hello, {{ name }}</greeting>
+```
+那么要清楚一点，name是在父组件的作用域下解析的，而不是在greeting组件的作用域下解析。在greeting组件内部定义的name数据属性，在这里访问不到的，name必须存在于父组件的data选项中。这就是编译作用域的问题。
+
+父组件模板中的所有内容都是在父级作用域内编译；子组件模板中的所有内容都是在子作用域内编译。
+
+### 10.6.2 默认内容
+
+在组件内部使用\<slot\>元素时，可以在该元素指定一个默认内容，以防止组件的使用者没有给该组件传递内容。例如，一个用作提交按钮的组件\<submit-button\>的模板内容如下：
+```
+<button type="submit">
+    <slot>提交</slot>
+</button>
+```
+在父级组件中使用\<submit-button\>,但是不提供插槽内容。代码如下：
+```
+<submit-button></sumbit-button>
+```
+那么该组件的渲染结果如下：
+```
+<button type="submit">
+    提交
+</button>
+```
+如果父级组件提供了插槽内容，代码如下所示：
+```
+<submit-button>注册</submit-button>
+```
+那么该组件的渲染结果如下：
+```
+<button type="submit">
+    注册
+</button>
+```
+
+### 10.6.3 命名插槽
+
+在开发组件时，可能需要用到多个插槽。例如，有一个布局组件\<base-layout\>,它的模板内容需要如下的形式：
+```
+<div class="container">
+    <head>
+        <!-- 我们希望把页头放这里 -->
+    </head>
+
+    <main>
+        <!-- 我们希望把主要内容放这里 -->
+    </main>
+
+    <footer>
+        <!-- 我们希望把页脚放这里 -->
+    </footer>
+</div>
+```
+遇到这种情况，可以使用命名的插槽，\<slog\>元素有一个name属性，可以定义多个插槽。代码如下：
+```
+<div class="container">
+    <header>
+        <slot name="header"></slot>
+    </header>
+    <main>
+        <slot></slot>
+    </main>
+    <footer>
+        <slot name="footer"><slot>
+    </footer>
+</div>
+```
+没有使用name属性的\<slot\>元素具有隐匿名称default。
+
+在向命名插槽提供内容的时候，在一个\<template\>元素上使用v-slot指令，并以v-slot参数的形式指定插槽的名称。代码如下所示：
+```
+<base-layout>
+    <template v-slot:header>
+        <h1>这里是页头部分，如导航栏</h1>
+    </template>
+
+    <p>主要内容的一个段落</p>
+    <p>另一个段落</p>
+
+    <template v-slot:footer>
+        <p>这里是页脚部分，如联系方式，友情链接</p>
+    </template>
+</base-layout>
+```
+现在\<template\>元素中的所有内容都将被传递到相应的插槽（不包含\<template\>元素本身）。任何没有被包裹在带有v-slot的\<template\>元素中的内容都会被视为默认插槽的内容。
+
+对于默认插槽的内容传递，也可以利用默认插槽的隐含名称default,使用\<template\>元素对内容进行包裹。代码如下：
+```
+<base-layout>
+    <template v-slot:header>
+        <h1>这里是页头部分，如导航栏</h1>
+    </template>
+
+    <template v-slot:default>
+        <p>主要内容的一个段落</p>
+        <p>另一个段落</p>
+    </template>
+
+    <template v-slot:footer>
+        <p>这里是页脚部分，如联系方式，友情链接</p>
+    </template>
+</base-layout>
+```
+无论采用哪种方式，最终渲染的结果都是一样的。代码如下：
+```
+<div class="container">
+    <header>
+        <h1>这里是页头部分，如导航栏</h1>
+    </header>
+    <main>
+        <p>主要内容的一个段落</p>
+        <p>另一个段落</p>
+    </main>
+    <footer>
+        <p>这里是页脚部分，如联系方式，友情链接</p>
+    </footer>
+</div>
+```
+要注意，v-slot指令只能在\<template\>元素或组件元素上使用。在组件元素上使用有一些限制，请参见第10.6.4章节
+
+与v-bind和v-on指令一样，v-slot指令也有缩写语法，即用“#”号替换“v-slot:”。代码如下：
+```
+<base-layout>
+    <template #header>
+        <h1>这里是页头部分，如导航栏</h1>
+    </template>
+
+    <template #default>
+        <p>主要内容的一个段落</p>
+        <p>另一个段落</p>
+    </template>
+
+    <template #footer>
+        <p>这里是页脚部分，如联系方式，友情链接</p>
+    </template>
+</base-layout>
+```
+
 ## 10.9 组件的生命周期
 
 每个组件实例在创建时都要经过一系列的初始化步骤。例如，它需要设置数据观察、编译模板、将实例挂载在DOM中，并在数据变化发生时更新DOM。在此过程中，它还运行称为生命周期钩子的函数，使用户有机会在特定阶段添加自己的代码。
