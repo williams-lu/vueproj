@@ -544,7 +544,7 @@ custom-layout组件最终渲染结果如下：
 ```
 如果\<main\>元素上单击，将触发父组件实例的changeValue()方法。
 
-### 10.3 监听子组件事件
+## 10.3 监听子组件事件
 
 前面介绍了父组件可以通过prop向子组件传递数据，反过来，子组件的某些功能需要与父组件进行通信，那该如何实现？
 
@@ -713,9 +713,270 @@ app.component('custom-form', {
 })
 ```
 
-### 10.4 在组件上使用v-model指令
+## 10.4 在组件上使用v-model指令
 
+在表单元素上使用v-model指令可以实现数据双向绑定。例如：
+```
+<input type="text" v-model="message" />
+```
+等同于:
+```
+<input :value="message" @input="message = $event.target.value" />
+```
+很多表单UI组件都是对HTML的表单控件的封装，在使用浙这些UI组件时，也可以使用v-model指令实现数据双向绑定。但是在组件上使用v-model指令时，情况会有所不同，代码如下：
+```
+<my-input v-model="message"></my-input>
+```
+v-model会执行以下操作：
+```
+<my-input
+    :model-value="message"
+    @update:model-value="message = $event">
+</my-input>
+```
+这样的话，组件内部\<input\>元素就必须将value属性绑定到modelValue prop上，在input事件发生时，使用新的输入值触发update:modelValue事件。按照这个要求，可以给出如下的MyInput组件的实现代码：
+```
+const app = Vue.createApp({
+    data() {
+        return {
+            message: 'Vue教程'
+        }
+    }
+});
+app.component('MyInput', {
+    props: ['modelValue'],
+    template: 
+    `
+        <input :value="modelValue" @input="$emit('update:modelValue', $event.target.value)">
+    `
+});
 
+app.mount('#app');
+```
+在自定义组件中创建v-model功能的另一种方法是使用计算属性，在计算属性中定义get()和set()方法，get()方法返回modelValue属性或用于绑定的任何属性，set()方法为该属性触发相应的$emit。
+
+修改上述MyInput组件的代码如下所示：
+```
+app.component('MyInput', {
+    props: ['modelValue'],
+    template:
+    `
+        <input v-model="value">
+    `,
+    computed: {
+        value: {
+            get() {
+                return this.modelValue
+            },
+            set(newValue) {
+                this.$emit('update:modelValue', newValue);
+            }
+        }
+    }
+});
+```
+完整代码如下：
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.4 components-input-v-model</title>
+</head>
+<body>
+    <div id="app">
+        <my-input v-model="message"></my-input>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    message: 'Vue教程'
+                }
+            }
+        });
+
+        app.component('MyInput', {
+            data: function() {
+                return {
+                    inpuStyles: {
+                        'background-color': '#cdcdcd',
+                        opacity: 0.5,
+                    },
+                }
+            },
+            props: ['modelValue'],
+            template:
+            `
+                <div>
+                    <input :value="modelValue" @input="$emit('update:modelValue', $event.target.value)">
+                    <label>{{ modelValue }}</label>
+                </div>
+            `
+        });
+
+        const vm = app.mount('#app');
+    </script>
+</body>
+</html>
+```
+代码部分，在props选项中定义了modelValue prop，modelValue可以作为数据属性使用。
+
+在Console窗口中输入vm.message="hello",可以看到文本输入控件中的内容和\<label\>元素的内容都发生了改变。
+
+### 10.4.1 v-model的参数
+
+默认情况下，组件上的v-model使用modelValue作为prop,update:modelValue作为事件，可以给v-model指令传递一个参数来修改默认的名称。
+
+例如，要使用名字title作为prop，可以将title作为参数传递给v-model指令。代码如下：
+```
+<my-input v-model:title="message"></my-input>
+```
+在这种情况下，MyInput组件需要一个title prop,以及触发update:title事件保证同步。代码如下；
+```
+app.component('MyInput', {
+    props: {
+        title: String
+    }，
+    template:
+    `
+        <div>
+            <input :value="title" @input="$emit('update:title', $event.target.value)">
+            <label>{{ title }}</label>
+        </div>
+    `
+});
+```
+从Vue3.0开始，可以在同一个组件上进行多个v-model绑定。利用v-model的参数机制，每个v-model可以同步到不同的prop,而不需要在组价中添加额外的选项。
+
+如下所示：
+```
+<user-name
+    v-model:first-name="firstName"
+    v-model:last-name="lastName"
+></user-name>
+
+const app = Vue.createApp({})
+
+app.component('user-name', {
+    props: {
+        firstName: String,
+        lastName: String,
+    },
+    template:
+    `
+        <input
+            type="text"
+            :value="firstName"
+            @input="$emit('update:lastName', $event.target.value)">
+    `
+})
+```
+
+### 10.4.2 处理v-model的修饰符
+
+在第9章讲解v-model指令时，我们介绍了.trim、.lazy和.number这3个内置修饰符，但某些情况下，我们可能想要添加自定义修饰符。
+
+接下来创建一个自定义修饰符capitalize,它将v-model绑定提供的字符串的第一个字母大写。添加到组件v-model的修饰符将通过modelModifiers prop提供给组件。代码如下：
+```
+<my-input v-model.capitalize="message"></my-input>
+
+app.component('MyInput', {
+    props: {
+        modelValue: String,
+        // modelModifiers prop 默认为空对象
+        modelModifiers: {
+            default: () => ({})
+        }
+    },
+    template:
+    `
+        <div>
+            <input
+                :value="modelValue"
+                @input="$emit('update:modelValue', $event.target.value)">
+            <label>{{ modelValue }}</label>
+        </div>
+    `,
+    created() {
+        console.log(this.modelModifiers) // { capitalize: true}
+    }
+});
+```
+当组件的created生命周期钩子触发时，modelModifiers prop包含capitalize属性，它的值为true。接下来可以通过检查capitalize值的真假，在\<input\>元素触发input事件时，将字符串的首字母大写。代码如下：
+```
+<my-input v-model.capitalize="message"></my-input>
+
+const app = Vue.createApp({
+    data() {
+        return {
+            message: ''
+        }
+    }
+});
+
+app.component('MyInput', {
+    props: {
+        modelValue: String,
+        // modelModifiers prop 默认为空对象
+        modelModifiers: {
+            default: () => ({})
+        }
+    },
+    methods: {
+        emitValue(e) {
+            let value = e.target.value
+            if (this.modelModifiers.capitalize) {
+                value = value.charAt(0).toUpperCase() + value.slice(1)
+            }
+            this.$emit('update:modelValue', value)
+        }
+    },
+    template:
+    `
+        <div>
+            <input :value="modelValue" @input="emitValue">
+            <label>{{ modelValue }}</label>
+        </div>
+    `
+});
+const vm = app.mount('#app');
+```
+在文本输入框输入英文字符，其首字母会自动转换为大写。
+
+对于带参数的v-model绑定，生成的prop的名字是arg + "Modifiers"。我们看下面代码：
+```
+<my-input v-model:title.capitalize="message"></my-input>
+
+app.component('MyInput', {
+    props: {
+        title: String,
+        titleModifiers: {
+            default: () => ({})
+        }
+    },
+    methods: {
+        emitValue(e) {
+            let value = e.target.value
+            if (this.titleModifiers.capitalize) {
+                value = value.charAt(0).toUpperCase() + value.slice(1)
+            }
+            this.$emit('update:title', value)
+        }
+    },
+    template:
+    `
+        <div>
+            <input :value="title" @input="emitValue">
+            <latel>{{ title }}</latel>
+        </div>
+    `
+});
+```
 
 ## 10.9 组件的生命周期
 
