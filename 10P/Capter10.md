@@ -1213,6 +1213,361 @@ Vue.component('greeting', {
 </base-layout>
 ```
 
+### 10.6.4 作用域插槽
+
+前面介绍过，在父级作用域下，在插槽内容中是无法访问到子组件的数据属性的，但有时候需要在父级的插槽内容中访问子组件的数据，为此，可以在子组件的\<slot\>元素上使用v-bind指令绑定一个prop。代码如下：
+```
+app.component('my-button', {
+    data() {
+        return {
+            titles: {
+                login: '登录',
+                register: '注册',
+            }
+        }
+    },
+    template: 
+    `
+        <button>
+            <slot :values = "titles">
+                {{ titles.login }}
+            </slot>
+        </button>
+    `
+});
+```
+这个按钮的名称可以在“登录”和“注册”之间切换，为了让父组件可以访问titles，在\<slot\>元素上使用v-bind指令绑定一个values属性，称为插槽prop，这个prop不需要在props选项中声明。
+
+在父级作用域下使用该组件时，可以给v-slot指令一个值来定义组件提供的插槽prop的名字。代码如下：
+```
+<my-button>
+    <template v-slot:default="slotProps">
+        {{ slotProps.values.register }}
+    </template>
+</my-button>
+```
+因为\<my-button\>组件内的插槽是默认插槽，所有这里使用其隐含的名字default，然后给出一个名字slotProps，这个名字可以随便取，代表的是包含组件内所有插槽prop的一个对象，然后就可以利用这个对象访问组件的插槽prop，values prop是绑定到titles数据属性上的，所以可以进一步访问titles的内容。最后渲染的结果是：\<button\>注册\</button\>。
+
+在上面的例子中，父级作用域只是给默认插槽提供了内容，在这种情况下，可以省略\<template\>元素，把v-slot指令直接用在组件的元素标签上。代码如下：
+```
+<my-button v-slot:default="slotProps">
+    {{ slotProps.values.register }}
+</my-button>
+```
+上述代码还可以进一步简化，省略default参数。代码如下：
+```
+<my-button v-slot="slotProps">
+    {{ slotProps.values.register }}
+</my-button>
+```
+正如未指明的内容对应默认的插槽一样，不带参数的v-slot指令被假定为对应默认插槽。
+
+默认插槽的简写语法写好，但不能与命名的插槽混合使用，因为它会导致作用域不明确。例如：
+```
+<!-- 无效，会导致警告 -->
+<my-button v-slot="slotProps">
+    {{ slotProps.values.register }}
+    <template v-slot:other="otherSlotProps">
+        slotProps在这里不可用
+    </template>
+</my-button>
+```
+只要出现多个插槽，就应该始终为所有的插槽使用完整的基于\<template\>的语法。代码如下：
+```
+<my-button>
+    <template v-slot:default="slotProps">
+        {{ slotProps.values.register }}
+    </template>
+
+    <template v-slot:other="otherSlotProps">
+        ...
+    </template>
+</my-button>
+```
+作用域插槽的内部工作原理是将插槽内容包装到传递单个参数的函数中来工作。代码如下：
+```
+function (slotProps) {
+    //插槽内容
+}
+```
+这意味着v-slot的值实际上是可以在任何能够作为函数定义中的参数的JavaScript表达式。所以在支持ES6的环境下，可以使用解构语法提取特定的插槽prop。代码如下：
+```
+<my-button v-slot="{values}">
+    {{ valuse.register }}
+</my-button>
+```
+这使模板更加简洁，尤其是在该插槽提供了多个prop的时候。与对象解构语法（参考3.7.1节）中可以重命名对象属性一样，提取插槽prop的时候也可以重命名。代码如下：
+```
+<my-button v-slot="{values:titles}">
+    {{ titles.register }}
+</my-button>
+```
+
+### 10.6.5 动态插槽名
+
+动态指令参数也可以用在v-slot指令上，定义动态的插槽名。代码如下：
+```
+<base-layout>
+    <template v-slot:[dynamicSlotName]
+        ...
+    </template>
+</base-layout>
+```
+dynamicSlotName需要在父级作用域下能够正常解析，如存在对应的数据属性或计算属性。如果是在DOM模板中使用，还要注意元素属性名的大小写问题。
+
+## 10.7 动态组件
+
+在页面应用程序中，经常遇到多标签页面，在Vue.js中，可以通过动态组件来实现。组件的动态切换是通过在\<component\>元素上使用is属性实现的。
+
+下面通过一个例子学习动态组件的使用。本例的界面显示效果如图所示：
+
+3个标签是3个按钮，下面的内容部分由组件来实现，3个按钮对应3个组件，按钮响应click事件，单击不同按钮时切换至不同的组件，组件切换通过\<component\>元素和其上的is属性实现。
+
+3个组件的实现代码如下：
+```
+app.component('tab-introduce', {
+    data() {
+        return {
+            content: 'Vue教程'
+        }
+    },
+    template: '<div><input v-model="content"></div>'
+});
+app.component('tab-comment', {
+    template: '<div>这是一本好书</div>'
+});
+app.component('tab-qa', {
+    template: '<div>有人看过吗？怎么样？</div>'
+});
+```
+第一组件的模板使用了一个\<input\>元素，便于我们修改内容，这主要是为了引出后面的知识点。
+
+在根实例中定义了两个数据属性和一个计算属性，主要是为了便于使用v-for指令循环渲染button按钮，以及动态切换组件。代码如下：
+```
+const app = Vue.createApp({
+    data() {
+        return {
+            currentTab: 'introduce',
+            tabs: [
+                { title: 'introduce', displayName: '图书介绍' },
+                { title: 'comment', displayName: '图书评价' },
+                { title: 'qa', displayName: '图书问答' },
+            ]
+        }
+    },
+    computed: {
+        currentTabComponent: function() {
+            return 'tab-' + this.currentTab
+        }
+    }
+})
+...
+app.mount('#app');
+```
+数据属性currentTab代表当前的标签页，tabs是一个数组对象，通过v-for指令渲染代表标签的3个按钮，计算属性currentTabComponent代表当前选中的组件。
+
+接下来就是在与实例关联的DOM模板中渲染按钮，以及动态切换组件的代码。代码如下：
+```
+<div id="app">
+    <button
+        v-for="tab in tabs"
+        :key="tab.title"
+        :class="['tab-button', { active: currentTab === tab.title }]"
+        @click="currentTab = tab.title">
+        {{ tab.displayName }}
+    </button>
+
+    <component
+        :is="currentTabComponent"
+        class="tab">
+    </component>
+</div>
+```
+当单击某个标签按钮时，更改数据属性currentTab的值，这将导致计算属性currentTabComponent的值更新，\<component\>元素的is属性使用v-bind指令绑定到一个已注册组件的名字上，随着计算属性currentTabComponent值的改变，组件也就自动切换了。
+
+剩下的代码就是CSS样式的设置了。完整代码如下dynamic-component.html：
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.7 dynamic-component</title>
+    <style>
+        div {
+            width: 400px;
+        }
+        .tab-button {
+            padding: 6px 10px;
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
+            border: solid 1px #ccc;
+            cursor: pointer;
+            background: #f0f0f0;
+            margin-bottom: -1px;
+            margin-right: -1px;
+        }
+        .tab-button:hover {
+            background: #e0e0e0;
+        }
+        .tab-button.active {
+            background: #cdcdcd;
+        }
+        .tab {
+            border: solid 1px #ccc;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <button
+            v-for="tab in tabs"
+            :key="tab.title"
+            :class="['tab-button', { active: currentTab === tab.title }]"
+            @click="currentTab = tab.title">
+            {{ tab.displayName }}
+        </button>
+        <keep-alive>
+            <component
+                :is="currentTabComponent"
+                class="tab">
+            </component>
+        </keep-alive>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    currentTab: 'introduce',
+                    tabs: [
+                        { title: 'introduce', displayName: '图书介绍' },
+                        { title: 'comment', displayName: '图书评价' },
+                        { title: 'qa', displayName: '图书问答' },
+                    ]
+                }
+            },
+            computed: {
+                currentTabComponent: function() {
+                    return 'tab-' + this.currentTab
+                }
+            }
+        });
+
+        app.component('tab-introduce', {
+            data() {
+                return {
+                    content: 'Vue教程'
+                }
+            },
+            template: '<div><input v-model="content"></div>'
+        });
+        app.component('tab-comment', {
+            template: '<div>这是一本好书</div>'
+        });
+        app.component('tab-qa', {
+            template: '<div>有人看过吗？怎么样？</div>'
+        });
+
+        app.mount('#app');
+    </script>
+</body>
+</html>
+```
+上例第一个组件的模板中使用了一个\<input\>元素，修改后，切换到其他标签页，然后再切换回来，你会发现之前修改的内容并没有保存下来。
+
+这是因为每次切换新标签的时候，Vue都创建一个新的currentTabComponent实例。在本例中，希望组件在切换的时候，可以保持组件的状态，以避免重复渲染导致的性能问题，也为了让用户的体验更好。要解决这个问题，可以用一个\<keep-alive\>元素将动态组件包裹起来。代码如下：
+```
+<keep-alive>
+    <component
+        v-bind:is="currentTabComponent"
+        class="tab">
+    </component>
+</keep-alive>
+```
+再次测试页面，可以发现组件的状态被保存下来了。
+
+## 10.8 异步组件
+
+在大型的应用中，可能需要将应用分割成较小的代码块，并且只在需要时才从服务器加载组件。为了实现这一点，Vue给出了一个defineAsyncComponent()方法，该方法接收一个返回Pormise的工厂函数，当从服务器检索到组件定义的时候，应该调用Promise的resolve调用。代码如下：
+```
+const app = Vue.createApp({})
+
+const AsyncComp = Vue.defineAsyncComponent(
+    () =>
+        new Promise(( resolve, reject) => {
+            resolve({
+                template: '<div>I am async!</div>'
+            })
+        })
+)
+
+app.component('async-example', AsyncComp)
+```
+当然也可以调用reject(reason)指示加载失败。
+
+也可以在工厂函数中返回一个Promise，因此对于Webpack 2或更高版本，以及ES6语法，可以执行以下操作。
+```
+import { defineAsyncComponent } from 'vue'
+
+const AsyncComp = defineAsyncComponent(() => 
+    import('./components/AsyncComponent.vue')
+)
+
+app.component('async-component', AsyncComp)
+```
+在本地注册组件时，也可以使用defineAsyncComponent()方法。代码如下：
+```
+import { createApp, defineAsyncComponent } from 'vue'
+
+createApp({
+    //...
+    components: {
+        AsyncComponent: defineAsyncComponent(() => 
+            import('./components/AsyncComponent.vue')
+        )
+    }
+})
+```
+defineAsyncComponent()方法还可以接收一个对象作为参数。代码如下：
+```
+import { defineAsyncComponent } from 'vue'
+
+const AsyncComp = defineAsyncComponent({
+    //工厂函数
+    loader: () => import('./Foo.vue')
+    //加载异步组件时要使用的组件
+    loadingComponent: loadingComponent,
+    //加载失败时要使用的组件
+    errorComponent: ErrorComponent,
+    //显示加载组件前的延迟时间，默认值是200ms
+    delay: 200,
+    //如果给出了超时值并超过超时值，则显示错误组件。默认没有超时值
+    timeout: 3000,
+    //定义组件是否可悬挂，默认值是true
+    suspensible: false,
+    /**
+    *
+    * @param {*} error 错误消息对象
+    * @param {*} retry 指示当加载器promise拒绝时异步组件是否应重试的函数
+    * @param {*} fail 失败结束
+    * @param {*} 允许重试的最大尝试次数
+    */
+    onError(error, retry, fail, attempts) {
+        if (error.message.match(/fetch/) && attempts <= 3) {
+            //获取错误时重试，最多尝试3次
+            retry()
+        } else {
+            //请注意，重试/失败类似于promise的resolve/reject：
+            //要继续进行错误处理，必须调用其中一个
+            fail()
+        }
+    },
+})
+```
+
 ## 10.9 组件的生命周期
 
 每个组件实例在创建时都要经过一系列的初始化步骤。例如，它需要设置数据观察、编译模板、将实例挂载在DOM中，并在数据变化发生时更新DOM。在此过程中，它还运行称为生命周期钩子的函数，使用户有机会在特定阶段添加自己的代码。

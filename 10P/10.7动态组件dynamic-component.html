@@ -1,0 +1,91 @@
+<!-- 10.7 动态组件dynamic-component -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10.7 dynamic-component</title>
+    <style>
+        div {
+            width: 400px;
+        }
+        .tab-button {
+            padding: 6px 10px;
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
+            border: solid 1px #ccc;
+            cursor: pointer;
+            background: #f0f0f0;
+            margin-bottom: -1px;
+            margin-right: -1px;
+        }
+        .tab-button:hover {
+            background: #e0e0e0;
+        }
+        .tab-button.active {
+            background: #cdcdcd;
+        }
+        .tab {
+            border: solid 1px #ccc;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <button
+            v-for="tab in tabs"
+            :key="tab.title"
+            :class="['tab-button', { active: currentTab === tab.title }]"
+            @click="currentTab = tab.title">
+            {{ tab.displayName }}
+        </button>
+        <keep-alive>
+            <component
+                :is="currentTabComponent"
+                class="tab">
+            </component>
+        </keep-alive>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    currentTab: 'introduce',
+                    tabs: [
+                        { title: 'introduce', displayName: '图书介绍' },
+                        { title: 'comment', displayName: '图书评价' },
+                        { title: 'qa', displayName: '图书问答' },
+                    ]
+                }
+            },
+            computed: {
+                currentTabComponent: function() {
+                    return 'tab-' + this.currentTab
+                }
+            }
+        });
+
+        app.component('tab-introduce', {
+            data() {
+                return {
+                    content: 'Vue教程'
+                }
+            },
+            template: '<div><input v-model="content"></div>'
+        });
+        app.component('tab-comment', {
+            template: '<div>这是一本好书</div>'
+        });
+        app.component('tab-qa', {
+            template: '<div>有人看过吗？怎么样？</div>'
+        });
+
+        app.mount('#app');
+    </script>
+
+</body>
+</html>
