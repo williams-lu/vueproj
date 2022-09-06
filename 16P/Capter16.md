@@ -1457,7 +1457,7 @@ const moduleA = {
     }
 }
 ```
-在一个大型项目中,如果store模块划分较多,Vuex建议项目结构按照以下形式组织.
+在一个大型项目中,如果store模块划分较多,Vuex建议项目结构按照以下形式组织。
 ```
 |---store
     |---index.js       # 组装模块并导出store的地方
@@ -1467,9 +1467,513 @@ const moduleA = {
         |---cart.js    # 购物车模块
         |---products.js # 产品模块
 ```
-在默认情况下,模块内部的action、mutation和getters是注册在全局命名空间下的,这使多个模块能够对同一mutation或action做出响应.
+在默认情况下,模块内部的action、mutation和getters是注册在全局命名空间下的,这使多个模块能够对同一mutation或action做出响应。
 
-如果希望模块具有更高的封装度和复用度,则可以通过添加namespaced:true的方式使其成为带命名空间的模块.当模块被注册后,它的所有mutation、action和getters都会根据模块注册的路径自动命名.例如:
+如果希望模块具有更高的封装度和复用度,则可以通过添加namespaced:true的方式使其成为带命名空间的模块。当模块被注册后,它的所有mutation、action和getters都会根据模块注册的路径自动命名。例如:
+```
+const store = createStore({
+    modules: {
+        account: {
+            namespaced: true,
+
+            //模块内容（module assets)
+            //模块的状态已经是嵌套的，使用namespaced选项不会对齐产生影响
+            state: () => ({ ... }),
+            getters: {
+                isAdmin () { ... } //-> getters['account/isAdmin']
+            },
+            actions: {
+                login () { ... } // ->dispatch('account/login')
+            },
+            mutations: {
+                login () { ... }  // -> commit('account/login')
+            },
+
+            //嵌套模块
+            modules: {
+                //继承父模块的命名空间
+                myPage: {
+                    state: () => ({ ... }),
+                    getters: {
+                        profile () { ... } // -> getters['account/profile']
+                    }
+                }
+            },
+
+            //进一步嵌套命名空间
+            posts: {
+                namespaced: true,
+                state: () => ({ ... }),
+                getters: {
+                    popular () { ... } // -> getters['account/popular']
+                }
+            }
+        }
+    }
+})
+```
+启用了命名空间的getters和actions会接收本地化的getters、dispatch和commit。换句话说，在同一模块内使用模块内容(module assets)时不需要添加前缀。在命名空间和非命名空间之间切换不会影响模块内的代码。
+
+在带有命名空间的模块内如果要使用全局state和getters，rootState和rootGetters会作为第3和第4个参数传入getter()函数，也会通过context对象的属性传入action()函数。如果在全局命名空间内分发action或提交mutation,则将{ root: true }作为第3个参数传给dispatch()或commit()方法即可。代码如下：
+```
+modules: {
+    foo: {
+        namespaced: true,
+
+        getters: {
+            //在foo模块中，getters已被本地化
+            //使用getters的第3个参数rootState访问全局state
+            //使用getters的第4个参数rootGetters访问全局getters
+            someGetter(state, getters, rootState, rootGetters) {
+                getters.someOtherGetter               // -> 'foo/someOtherGetter'
+                rootGetters.someOtherGetter           // -> 'someOtherGetter'
+                rootGetters['bar/someOtherGetter']    // -> 'bar/someOtherGetter'
+            },
+            someOtherGetter: state => { ... }
+        },
+        actions: {
+            //在这个模块中，dispatch和commit也被本地化了
+            //它们可以接收root选项以访问根dispatch或commit
+            someAction({ dispatch, commit, getters, rootGetters }) {
+                getters.someGetter               // -> 'foo/someGetter'
+                rootGetters.someGetter           // -> 'someGetter'
+                rootGetters['bar/someGetter']    // -> 'bar/somerGetter'
+
+                dispatch('someOtherGetter')      // -> 'foo/someOtherGetter'
+                dispatch('someOtherAction', null, { root: true }) // -> 'someOtherAction'
+
+                commit('someMutation')        // -> 'foo/someMutation'
+                commit('someMutation', null, { root: true })   // -> 'someMutation'
+            },
+            someOtherAction(ctx, payload) { ... }
+        }
+    }
+}
+```
+如果需要在带命名空间的模块内注册全局action，可以将其标记为root: true，并将这个action的定义放在函数handler()中。例如：
+```
+{
+    actions: {
+        someOtherAction({dispatch}) {
+            dispatch('someAction')
+        }
+    },
+    modules: {
+        foo: {
+            namespaced: true,
+
+            actions: {
+                someAction: {
+                    root: true,
+                    handler(namespacedContext, payload) { ... }  // -> 'someAction'
+                }
+            }
+        }
+    }
+}
+```
+在组件内使用mapState()、mapGetters()、mapAction和mapMutation()这些辅助函数绑定带命名空间的模块时，写起来可能比较烦琐。代码如下：
+```
+computed: {
+    ...mapState({
+        a: state => state.some.nested.modules.a,
+        b: state => state.some.nested.modules.b,
+    }),
+    ...mapGetters([
+        'some/nested/module/someGetter',   // -> this['some/nested/module/someGetter']
+        'some/nested/module/someOtherGetter',   // -> this['some/nested/module/someOtherGetter']
+    ])
+},
+methods: {
+    ...mapAction({
+        'some/nested/module/foo',   // -> this['some/nested/module/foo']()
+        'some/nested/module/bar',   // -> this['some/nested/module/bar']()
+    })
+}
+```
+在这种情况下，可以将带命名空间的模块名字作为第1个参数传递给上述函数，这样所有绑定都会自动使用该模块作为上下文。于是上面的例子可以简化为如下所示。
+```
+computed: {
+    ...mapState('some/nested/module', {
+        a: state => state.a,
+        b: state => state.b,
+    }),
+    ...mapGetters('some/nested/module', [
+        'someGetter',   // -> this.someGetter
+        'someOtherGetter',   // -> this.someOtherGetter
+    ])
+},
+methods: {
+    ...mapAction('some/nested/module', {
+        'foo',   // -> this.foo()
+        'bar',   // -> this.bar()
+    })
+}
+```
+此外，还可以使用createNamespacedHelpers()方法创建命名空间的辅助函数。它返回一个对象，该对象里有与给定命名空间值绑定的新的组件绑定辅助函数。代码如下：
+```
+import { createNamespaceHelpers } from 'vuex'
+
+const { mapState, mapActions } = createNamespaceHelpers('some/nested/module')
+
+export default {
+    computed: {
+        //在some/nested/module中查找
+        ...mapState({
+            a: state => state.a,
+            b: state => state.b,
+        })
+    },
+    methods: {
+        //在some/nested/module中查找
+        ...mapAction({
+            'foo',
+            'bar',
+        })
+    }
+}
+```
+为了让读者对命名空间的模块的访问有更直观的认知，下面给出一个简单的例子。
+
+先给出两个带命名空间的模块定义。代码如下：
+```
+const moduleA = {
+    namespaced: true,
+    state() {
+        return {
+            message: 'Hello Vue.js'
+        }
+    },
+    mutations: {
+        updateMessage(state, newMsg) {
+            state.message = newMsg;
+        }
+    },
+    actions: {
+        changeMessage({ commit }, newMsg) {
+            commit('updateMessage', newMsg);
+        }
+    },
+    getters: {
+        reversedMessage(state) {
+            return state.message.split('').reverse().join('');
+        }
+    }
+}
+
+const moduleB = {
+    namespaced: true,
+    state() {
+        return {
+            count: 0
+        }
+    },
+    mutations: {
+        increment(state) {
+            state.count++;
+        }
+    }
+}
+```
+ModuleA和ModuleB都使用了namespaced选项并设置为true，从而变成具有命名空间的模块。ModuleA中state、mutations、actions和getters一个都不少，简单起见，ModuleB只有state和mutations。
+
+接下来在Store实例中注册模块。代码如下所示：
+```
+const store = Vuex.createStore({
+    modules: {
+        msg: ModuleA,
+        another: ModuleB,
+    }
+})
+```
+根据模块注册时的名字访问模块。例如，要访问ModuleA中的状态，应该使用msg名字访问。代码如下：
+```
+this.$store.state.msg.message
+//或者
+this.$store.state.['msg'].message
+```
+模块注册时，也可以根据应用的需要，为名字添加任意前缀。例如：
+```
+const store = Vuex.createStore({
+    modules: {
+        'user/msg': ModuleA,
+        another: ModuleB,
+    }
+})
+```
+这时要访问ModuleA中的状态，需要使用user/msg。代码如下：
+```
+this.$store.state['user/msg'].message
+```
+最后看在组件内如何访问带命名空间的模块。代码如下：
+```
+app.component('MyComponent', {
+    data() {
+        return {
+            message: ''
+        }
+    },
+    computed: {
+        ...Vuex.mapState({
+            msg() {
+                return this.$store['msg'].message;
+            }
+        }),
+        //将模块的名字作为第一个参数传递给mapState()
+        ...Vuex.mapState('another', [
+            //将this.count映射为store.state['another'].count
+            'count',
+        ]),
+        reversedMessage() {
+            return this.$store.getters['msg/reversedMessage'];
+        }
+    },
+    methods: {
+        //将模块的名字作为第一个参数传递给mapMutations()
+        ...Vuex.mapMutation('msg', [
+            //将this.updateMessage()映射为this.$store.commit('msg/increment')
+            'updateMessage',
+        ]),
+        add() {
+            this.$store.commit('another/increment')
+        },
+        changeMessage() {
+            this.$store.dispatch('msg/changeMessage', this.message)
+        },
+        //等价于
+        /*
+        *...Vuex.mapActions('msg', [
+            //将this.changeMessage(message)映射为
+            //this.$store.dispatch('msg/changeMessage', message)
+            'changeMessage',
+        ]),*/
+
+    },
+    template: 
+    `
+        <div>
+            <p>
+                <span>消息：{{ msg }}</span>
+                <span>反转的消息: {{ reversedMessage }}</span>
+            </p>
+            <p>
+                <input type="text" v-model="message">
+                <button @click="changeMessage()">修改内容</button>
+            </p>
+            <p>
+                <span>计数：{{ conunt }}</span>
+                <button @click="add">增加计数</button>
+            </p>
+        </div>
+    `
+});
+```
+如果使用注释中的代码，需要将粗体显示的\<button\>元素的代码修改如下：
+```
+<button @click="changeMessage(message)">修改内容</button>
+```
+从上述代码可以看出，对于命名空间的模块空间，最简单的方式是使用辅助函数进行映射，并将模块的名字作为第一个参数传递进去，这样不仅简单，而且不会出错。
+完整代码Modules.html:
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>16.10 模块Modules</title>
+</head>
+<body>
+    <div id="app">
+        <my-component></my-component>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script src="https://unpkg.com/vuex@next"></script>
+    <script>
+        const app = Vue.createApp({});
+        const moduleA = {
+            namespaced: true,
+            state() {
+                return {
+                    message: 'Hello Vue.js'
+                }
+            },
+            mutations: {
+                updateMessage(state, newMsg) {
+                    state.message = newMsg;
+                }
+            },
+            actions: {
+                changeMessage({ commit }, newMsg) {
+                    commit('updateMessage', newMsg);
+                }
+            },
+            getters: {
+                reversedMessage(state) {
+                    return state.message.split('').reverse().join('');
+                }
+            }
+        }
+
+        const moduleB = {
+            namespaced: true,
+            state() {
+                return {
+                    count: 0
+                }
+            },
+            mutations: {
+                increment(state) {
+                    state.count++;
+                }
+            }
+        }
+
+        const store = Vuex.createStore({
+            modules: {
+                msg: ModuleA,
+                another: ModuleB,
+            }
+        })
+
+        app.component('MyComponent', {
+            data() {
+                return {
+                    message: ''
+                }
+            },
+            computed: {
+                ...Vuex.mapState({
+                    msg() {
+                        return this.$store['msg'].message;
+                    }
+                }),
+                //将模块的名字作为第一个参数传递给mapState()
+                ...Vuex.mapState('another', [
+                    //将this.count映射为store.state['another'].count
+                    'count',
+                ]),
+                reversedMessage() {
+                    return this.$store.getters['msg/reversedMessage'];
+                }
+            },
+            methods: {
+                //将模块的名字作为第一个参数传递给mapMutations()
+                ...Vuex.mapMutation('msg', [
+                    //将this.updateMessage()映射为this.$store.commit('msg/increment')
+                    'updateMessage',
+                ]),
+                add() {
+                    this.$store.commit('another/increment')
+                },
+                changeMessage() {
+                    this.$store.dispatch('msg/changeMessage', this.message)
+                },
+                //等价于
+                /*
+                *...Vuex.mapActions('msg', [
+                    //将this.changeMessage(message)映射为
+                    //this.$store.dispatch('msg/changeMessage', message)
+                    'changeMessage',
+                ]),*/
+
+            },
+            template: 
+            `
+                <div>
+                    <p>
+                        <span>消息：{{ msg }}</span>
+                        <span>反转的消息: {{ reversedMessage }}</span>
+                    </p>
+                    <p>
+                        <input type="text" v-model="message">
+                        <button @click="changeMessage()">修改内容</button>
+                    </p>
+                    <p>
+                        <span>计数：{{ conunt }}</span>
+                        <button @click="add">增加计数</button>
+                    </p>
+                </div>
+            `
+        });
+
+        app.use(store).mount('#app');
+    </script>
+</body>
+</html>
+```
+下面将购物车程序按模块组织，首先在store目录下新建一个modules文件夹，在给文件夹下继续新建一个文件cart.js，这个文件将作为购物车的模块文件，所有与购物车相关的状态管理都放到cart模块中。如果以后还有其他模块，如users模块，可以在modules目录下新建users.js文件，所有与用户相关的状态管理可以放到users模块中。
+
+将store/index.js文件中与购物车状态管理相关的代码复制到cart.js中，并指定选项namespaced: true,让cart成为带命名空间的模块。代码如下：
+
+store/modules/cart.js
+```
+import books from '@/data/books.js'
+
+const cart = {
+    namespaced: true,
+    state() {
+        return {
+            items: books
+        }
+    },
+    ...
+}
+
+export default cart
+```
+接下来修改store目录下的index.js文件，使用modules选项注册cart模块。代码如下：
+
+store/index.js
+```
+import { createStore } from 'vuex'
+
+const store = createStore({
+    modules: {
+        cart
+    }
+})
+
+export default store
+```
+最后修改Cart.vue，将带命名空间的模块名字cart作为第一个参数传递给mapXxx()等辅助函数，让所有绑定都自动使用cart模块作为上下文。修改后的代码如下：
+
+Cart.vue
+```
+<script>
+import { mapMutation, mapState, mapGetters, mapAction } from 'vuex'
+
+export default {
+    ...,
+    computed: {
+        ...mapState('cart', {
+            books: 'items'
+        }),
+        ...mapGetters('cart', {
+            itemPrice: 'cartItemPrice',
+            totalPrice: 'cartTotalPrice',
+        })
+    },
+    methods: {
+        ...mapMutations('cart', {
+            addItemToCart: 'pushItemToCart',
+            increment: 'incrementItemCount',
+        }),
+        ...mapMutations('cart', [
+            'deleteItem'
+        ]),
+        ...mapActions('cart', [
+            'addItemToCart'
+        ]),
+        ...
+    }
+};
+</script>
 ```
 
-```
+## 16.11 小结
+
+官方推荐使用Vuex进行状态管理，明确，不要直接修改store中的状态，而应该提交对应的mutation进行修改。在组件中，mutation是映射为组件的方法来使用的，而store中的state和getter是映射为计算属性来使用的，store中的action也是映射为组件的方法来使用的。
+
+如果应用比较复杂，状态比较多，那么可以分模块管理，也可以将模块定义为带命名空间的模块，不过访问时会稍微复杂。因此，在实际项目中，都建议使用辅助映射函数简化对store的访问。

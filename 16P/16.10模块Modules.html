@@ -1,0 +1,129 @@
+<!-- 16.10 模块 Modules -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>16.10 模块Modules</title>
+</head>
+<body>
+    <div id="app">
+        <my-component></my-component>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script src="https://unpkg.com/vuex@next"></script>
+    <script>
+        const app = Vue.createApp({});
+        const moduleA = {
+            namespaced: true,
+            state() {
+                return {
+                    message: 'Hello Vue.js'
+                }
+            },
+            mutations: {
+                updateMessage(state, newMsg) {
+                    state.message = newMsg;
+                }
+            },
+            actions: {
+                changeMessage({ commit }, newMsg) {
+                    commit('updateMessage', newMsg);
+                }
+            },
+            getters: {
+                reversedMessage(state) {
+                    return state.message.split('').reverse().join('');
+                }
+            }
+        }
+
+        const moduleB = {
+            namespaced: true,
+            state() {
+                return {
+                    count: 0
+                }
+            },
+            mutations: {
+                increment(state) {
+                    state.count++;
+                }
+            }
+        }
+
+        const store = Vuex.createStore({
+            modules: {
+                msg: ModuleA,
+                another: ModuleB,
+            }
+        })
+
+        app.component('MyComponent', {
+            data() {
+                return {
+                    message: ''
+                }
+            },
+            computed: {
+                ...Vuex.mapState({
+                    msg() {
+                        return this.$store['msg'].message;
+                    }
+                }),
+                //将模块的名字作为第一个参数传递给mapState()
+                ...Vuex.mapState('another', [
+                    //将this.count映射为store.state['another'].count
+                    'count',
+                ]),
+                reversedMessage() {
+                    return this.$store.getters['msg/reversedMessage'];
+                }
+            },
+            methods: {
+                //将模块的名字作为第一个参数传递给mapMutations()
+                ...Vuex.mapMutation('msg', [
+                    //将this.updateMessage()映射为this.$store.commit('msg/increment')
+                    'updateMessage',
+                ]),
+                add() {
+                    this.$store.commit('another/increment')
+                },
+                changeMessage() {
+                    this.$store.dispatch('msg/changeMessage', this.message)
+                },
+                //等价于
+                /*
+                *...Vuex.mapActions('msg', [
+                    //将this.changeMessage(message)映射为
+                    //this.$store.dispatch('msg/changeMessage', message)
+                    'changeMessage',
+                ]),*/
+
+            },
+            template: 
+            `
+                <div>
+                    <p>
+                        <span>消息：{{ msg }}</span>
+                        <span>反转的消息: {{ reversedMessage }}</span>
+                    </p>
+                    <p>
+                        <input type="text" v-model="message">
+                        <button @click="changeMessage()">修改内容</button>
+                    </p>
+                    <p>
+                        <span>计数：{{ conunt }}</span>
+                        <button @click="add">增加计数</button>
+                    </p>
+                </div>
+            `
+        });
+
+        app.use(store).mount('#app');
+    </script>
+</body>
+</html>
