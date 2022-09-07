@@ -1,0 +1,39 @@
+<!-- 11.3-3destructuring-reactive-state -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>11.3-3destructuring-reactive-state</title>
+</head>
+<body>
+    <div id="app">
+        <p>作者：{{ author }}</p>
+        <p>书名：{{ title }}</p>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const { reative } = Vue
+        const app = Vue.createApp({
+            setup() {
+                const book = reative({
+                    author: '孙鑫',
+                    year: '2020',
+                    title: 'Java无难事',
+                    description: '让Java的学习再无难事',
+                    price: '188',
+                })
+                let { author, title } = book;
+                return {
+                    author,
+                    title,
+                }
+            }
+        })
+        const vm = app.mount('#app');
+    </script>
+</body>
+</html>
