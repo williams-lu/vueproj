@@ -1,0 +1,26 @@
+[
+    {
+        "id": 1,
+        "title": "VC++深入详解",
+        "author": "孙鑫",
+        "price": 168.0,
+        "discount": 0.95,
+        "imgUrl": "/api/img/vc++.jpg",
+        "bigImgUrl": "/api/img/vc++big.jpg",
+        "bookConcern": null,
+        "publishDate": null,
+        "brief": null
+    },
+    {
+        "id": 2,
+        "title": "Java编程思想",
+        "author": "Bruce Eckel",
+        "price": 108.0,
+        "discount": 0.5,
+        "imgUrl": "/api/img/Javathink.jpg",
+        "bigImgUrl": "/api/img/Javathinkbig.jpg",
+        "bookConcern": null,
+        "publishDate": null,
+        "brief": null
+    }
+]
