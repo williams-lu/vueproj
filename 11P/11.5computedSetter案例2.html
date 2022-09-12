@@ -1,0 +1,58 @@
+<!-- 11.5computedSetter案例2 -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>11.5computedSetter</title>
+</head>
+<body>
+    <div id="app">
+        <parent></parent>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const { provide, inject, ref, onMounted } = Vue;
+
+        const msgKey = Symbol();
+        const helloKey = Symbol();
+
+        const app = Vue.createApp({
+            setup() {
+                const msg = ref('Vue教程');
+                const sayHello = function(name) {
+                    console.log("Hello, " + name);
+                }
+                //provide()方法需要指定一个Symbol类似的key
+                provide(msgKey, msg);
+                provide(helloKey, sayHello);
+                return {
+                    msg
+                }
+            },
+            template: '<child/>'
+        });
+
+        app.component('child', {
+            setup() {
+                // inject()方法接受一个可选的默认值作为第2个参数
+                // 如果没有提供默认值,并且在provide上下文中未找到该属性,则inject返回undefined
+                const message = inject(msgKey, ref('VC++教程'));
+                const hello = inject(helloKey);
+                onMounted(() => hello('zhangsan'));
+
+                return {
+                    message
+                }
+            },
+            // 当自身的数据属性来访问
+            template: '<p>{{ message }}</p>'
+        });
+        
+        const vm = app.mount('#app');
+    </script>
+</body>
+</html>

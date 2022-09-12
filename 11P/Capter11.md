@@ -678,3 +678,132 @@ const MyComponent = {
 ```
 
 ## 11.5 依赖注入
+
+在10.11.1小节中,介绍过provide和inject选项,组合API中也给出了对应的provide()和inject()方法,以支持注入.这两个方法只能在setup()期间使用当前活动实例来调用.
+
+在10.11.1小节的例子中,提到过注入的message属性不是响应式的,下面组合API的provide()和inject()方法改写例子,同时解决message属性的响应式更改问题.代码如下:
+
+computedSetter.html
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>11.5computedSetter</title>
+</head>
+<body>
+    <div id="app">
+        <parent></parent>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const { provide, inject, ref, onMounted } = Vue;
+        const app = Vue.createApp({});
+
+        const msgKey = Symbol();
+        const helloKey = Symbol();
+
+        app.component('parent', {
+            setup() {
+                const msg = ref('Vue教程');
+                const sayHello = function(name) {
+                    console.log("Hello, " + name);
+                }
+                //provide()方法需要指定一个Symbol类似的key
+                provide(msgKey, msg);
+                provide(helloKey, sayHello);
+                return {
+                    msg
+                }
+            },
+            template: '<child/>'
+        })
+
+        app.component('child', {
+            setup() {
+                // inject()方法接受一个可选的默认值作为第2个参数
+                // 如果没有提供默认值,并且在provide上下文中未找到该属性,则inject返回undefined
+                const message = inject(msgKey, ref('VC++教程'));
+                const hello = inject(helloKey);
+                onMounted(() => hello('zhangsan'));
+
+                return {
+                    message
+                }
+            },
+            // 当自身的数据属性来访问
+            template: '<p>{{ message }}</p>'
+        })
+        
+        const vm = app.mount('#app');
+    </script>
+</body>
+</html>
+```
+现在如果修改parent组件的msg属性的值,则会引起child组件中注入的message属性的更改.为了便于观察响应式依赖注入的更新,我们可以将parent组件的代码放到根组件实例中,这样Console窗口中就可以通过修改vm.msg的值来观察child组件的模板内容的重新渲染.
+
+修改上例,代码如下:
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>11.5computedSetter</title>
+</head>
+<body>
+    <div id="app">
+        <parent></parent>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const { provide, inject, ref, onMounted } = Vue;
+
+        const msgKey = Symbol();
+        const helloKey = Symbol();
+
+        const app = Vue.createApp({
+            setup() {
+                const msg = ref('Vue教程');
+                const sayHello = function(name) {
+                    console.log("Hello, " + name);
+                }
+                //provide()方法需要指定一个Symbol类似的key
+                provide(msgKey, msg);
+                provide(helloKey, sayHello);
+                return {
+                    msg
+                }
+            },
+            template: '<child/>'
+        });
+
+        app.component('child', {
+            setup() {
+                // inject()方法接受一个可选的默认值作为第2个参数
+                // 如果没有提供默认值,并且在provide上下文中未找到该属性,则inject返回undefined
+                const message = inject(msgKey, ref('VC++教程'));
+                const hello = inject(helloKey);
+                onMounted(() => hello('zhangsan'));
+
+                return {
+                    message
+                }
+            },
+            // 当自身的数据属性来访问
+            template: '<p>{{ message }}</p>'
+        });
+        
+        const vm = app.mount('#app');
+    </script>
+</body>
+</html>
+```
+在Chrome浏览器中的显示效果请自行查看.
+
+## 11.6 逻辑提取和重用
