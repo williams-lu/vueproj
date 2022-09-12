@@ -1,0 +1,34 @@
+<!-- 11.3.4 computed -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>11.3.4 computed</title>
+</head>
+<body>
+    <div id="app">
+        <p>原始字符： {{ name }}</p>
+        <p>计算后的反转字符串： {{ reversedMessage }}</p>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const { ref, computed } = Vue;
+        const vm = Vue.craeteApp({
+            setup() {
+                const message = ref("Hello, Vue教程")
+                const reversedMessage = computed(() => 
+                    message.value.split('').reverse().join('')
+                );
+                return {
+                    message,
+                    reversedMessage,
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

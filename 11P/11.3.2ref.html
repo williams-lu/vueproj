@@ -1,0 +1,23 @@
+<!-- 11.3.2 ref.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>11.3.2 ref.html</title>
+</head>
+<body>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const { ref, watchEffect } = Vue;
+        const state = ref(0)
+
+        watchEffect(() => {
+            document.body.innerHTML = `count is ${state.value}`
+        })
+    </script>
+</body>
+</html>

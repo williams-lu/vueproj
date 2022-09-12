@@ -400,3 +400,281 @@ watchEffect(
 
 ### 11.3.2 ref
 
+reactive()方法为一个JavaScript对象创建响应式代理，如果需要对一个原始值（如字符串）创建响应式代理对象，一种方式是将该原始值作为某个对象的属性，调用reactive()方法为该对象创建响应式代理对象，另一种方式就是使用Vue给出的另一个方法ref,该方法接受一个原始值，返回一个响应式和可变的ref对象，返回的对象只有一个value属性指向内部值。代码如下：
+
+ref.html
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>11.3.2 ref.html</title>
+</head>
+<body>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const { ref, watchEffect } = Vue;
+        const state = ref(0)
+
+        watchEffect(() => {
+            document.body.innerHTML = `count is ${state.value}`
+        })
+    </script>
+</body>
+</html>
+```
+此时取值需要访问state对象的value属性。上例在Chrome浏览器中的运行效果，如果要观察响应式对象的依赖跟踪，在Console窗口中需要修改state.value的值，而不是直接修改state对象。
+
+当ref作为渲染上下文中的属性返回（从setup返回的对象）并在模板中访问时，它将自动展开为内部值，不需要在模板中添加.value。代码如下：
+
+ref-unwrapping.html
+```
+<div id="app">
+    <span>{{ count }}</span>
+    <button @click="count ++">Increment count</button>
+</div>
+
+<script>
+    const {ref} = Vue;
+    const app = Vue.createApp({
+        setup() {
+            const count = ref(0);
+            return {
+                count
+            }
+        }
+    })
+    app.mount('#app');
+</script>
+```
+当ref作为响应式对象的属性被访问或更改时，它会自动展开为内部值，其行为类似于普通属性。代码如下：
+```
+const count = ref(0)
+const state = reative({
+    count
+})
+console.log(state.count)  //0
+
+state.count = 1
+console.log(count.value) //1
+```
+如果一个新的ref被赋值给一个链接到现有ref的属性，它将替换旧的ref。代码如下：
+```
+const otherCount = ref(2)
+
+state.count = otherCount
+console.log(state.count)  //2
+console.log(count.value)  //1
+```
+ref展开仅在嵌套在响应式对象内时发生，当从数组或本地集合类型（如Map）中访问ref时，不会执行展开操作。
+```
+const books = reactive([ref('Vue3从入门到实战')])
+// 需要添加.value
+console.log(books[0].value)
+
+const map = reactive(new Map([['count', ref(0)]
+// 需要添加.value
+console.log(map.get('count').value)
+```
+
+### 11.3.3 readonly
+
+有时候我们希望跟踪响应对象（ref或reactive）的变化，但还希望阻止从应用程序的某个位置对其进行更改。例如，当我们有一个提供的响应式对象时，想要防止它在注入的地方发生改变，为此，可以为原始对象创建一个只读代理。代码如下：
+```
+import { reactive, readonly } from 'vue'
+
+const original = reactive({ count: 0 })
+
+const copy = readonly(original)
+
+//改变origin将触发依赖copy的观察者
+original.count++
+
+//修改copy将失败并导致警告
+copy.count++ //warning:"set operation on key'count' fialed: target is readonly."
+```
+
+### 11.3.4 computed
+
+computed()方法与computed选项作用一样，用于创建依赖于其他状态的计算属性，该方法接收一个getter函数，并为getter返回的值返回一个不可变的响应式ref对象。代码如下：
+```
+const count = ref(1)
+const plusOne = computed(() => count.value + 1)
+
+const.log(plusOne.value)  // 2
+
+plusOne.value++ // error
+```
+我们使用组合API重新实现6.1节的内容，代码如下；
+
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>11.3.4 computed</title>
+</head>
+<body>
+    <div id="app">
+        <p>原始字符： {{ name }}</p>
+        <p>计算后的反转字符串： {{ reversedMessage }}</p>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const { ref, computed } = Vue;
+        const vm = Vue.craeteApp({
+            setup() {
+                const message = ref("Hello, Vue教程")
+                const reversedMessage = computed(() => 
+                    message.value.split('').reverse().join('')
+                );
+                return {
+                    message,
+                    reversedMessage,
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
+```
+与computed选项一样，computed()方法也可以接受一个带有get()和set()函数的对象来创建一个可写的ref对象。代码如下：
+```
+const count = ref(1)
+const plusOne = computed({
+    get: () => count.value + 1,
+    set: val => {
+        count.value = val - 1
+    }
+})
+
+plusOne.value = 1
+console.log(count.value)   // 0
+```
+我们使用组合API重新实现6.1节的例，代码如下所示：
+
+computedSetter.html
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>11.3.4computedSetter</title>
+</head>
+<body>
+    <div id="app">
+        <p>First name: <input type="text" v-model="firstName"></p>
+        <p>Last name: <input type="text" v-model="lastName"></p>
+        <p>{{ fullName }}</p>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const { ref, computed } = Vue;
+        const vm = Vue.createApp({
+            setup() {
+                const firstName = ref('Smith');
+                const lastName = ref('Will');
+                const fullName = computed({
+                    get: () => firstName.value + ' ' + lastName.value,
+                    set: val => {
+                        let names = val.split(' ')
+                        firstName.value = names[0]
+                        lastName.value = names[names.length - 1]
+                    }
+                });
+                return {
+                    firstName,
+                    lastName,
+                    fullName,
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
+```
+
+### 11.3.5 watchEffect
+
+watch()方法等同于Vue2.x的this.$watch()方法，以及相应的watch选项。watch()方法需要监听特定的数据源，并在单独的回调函数中应用副作用。默认情况下，它也是惰性的，即只有当被监听的数据源发生变化时，才会调用回调函数。
+
+与watchEffect()方法相比，watch()方法有以下功能：
++ 惰性地执行副作用；
++ 更具体地说什么状态应该触发监听器重新运行；
++ 访问被监听状态的前一个值和当前值。
+
+watch()与watchEffect()方法共享行为，包括手动停止、副作用失效（将onInvalidate作为第3个参数传递给回调）、刷新时间和调试。
+
+监听的数据源可以是返回值的getter函数，也可以是直接的ref对象。例如：
+```
+const state = reactive({ count: 0 })
+// 监听的数据源可以是返回值的getter函数
+watch(
+    () => state.count,
+    (count, prevCount) => {
+        /* ... */
+    }
+)
+
+const count = ref(0)
+// 直接监听一个ref对象
+watch(count, (count, prevCount) => {
+    /* ... */
+})
+```
+监听器还可以使用数组同时监听多个数据源。例如：
+```
+watch([fooRef, barRef], ([foo, bar], [prevFoo, prevBar]) => {
+    /* ... */
+})
+```
+
+## 11.4 生命周期钩子
+
+在组合API中，生命周期钩子通过调用onXxx()函数显式地进行注册。这些生命周期钩子注册函数只能在setup()期间同步使用，因为它们依赖内部全局状态定位当前活动实例\[即其setup()正在被调用的组件实例\]。在没有当前活动实例的情况下调用它们将导致错误。组件实例上下文也是在生命周期钩子的同步执行期间设置的，因此在生命周期钩子内同步创建的监听器和计算属性也会在组件卸载时被自动删除。
+
+在10.9章节，我们介绍了生命周期选项，这些选项与组合API之间的对应关系如下：
++ beforeCreate和created没有对应的onXxx()函数，取而代之使用setup()函数
++ beforeMount -> onBeforeMount
++ mounted -> onMounted
++ beforeUpdate -> onBeforeUpdate
++ updated -> onUpdated
++ beforeUnmount -> onBeforeUnmount
++ unmounted -> onUnmounted
++ activated -> onActivated
++ deactivated -> onDeactivated
++ errorCaptured -> onErrorCaptured
++ renderTracked -> onRenderTracked
++ renderTriggered -> onRenderTriggered
+
+实际上很容易就可以看出，组合API中对应的声明周期钩子注册函数的名字就是声明周期选项的名字首字母大写并添加前缀on。
+
+下面是一个在单文件组件内使用组合API注册声明周期钩子的示例：
+```
+import { onMounted, onUpdated, onUnmounted } from 'vue'
+
+const MyComponent = {
+    setup() {
+        onMounted(() => {
+            console.log('mounted!')
+        })
+        onUpdated(() => {
+            console.log('updated!')
+        })
+        onUnmounted(() => {
+            console.log('unmounted!')
+        })
+    }
+}
+```
+
+## 11.5 依赖注入
