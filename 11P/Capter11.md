@@ -679,9 +679,9 @@ const MyComponent = {
 
 ## 11.5 依赖注入
 
-在10.11.1小节中,介绍过provide和inject选项,组合API中也给出了对应的provide()和inject()方法,以支持注入.这两个方法只能在setup()期间使用当前活动实例来调用.
+在10.11.1小节中,介绍过provide和inject选项,组合API中也给出了对应的provide()和inject()方法,以支持注入。这两个方法只能在setup()期间使用当前活动实例来调用。
 
-在10.11.1小节的例子中,提到过注入的message属性不是响应式的,下面组合API的provide()和inject()方法改写例子,同时解决message属性的响应式更改问题.代码如下:
+在10.11.1小节的例子中,提到过注入的message属性不是响应式的,下面组合API的provide()和inject()方法改写例子,同时解决message属性的响应式更改问题。代码如下:
 
 computedSetter.html
 ```
@@ -743,7 +743,7 @@ computedSetter.html
 </body>
 </html>
 ```
-现在如果修改parent组件的msg属性的值,则会引起child组件中注入的message属性的更改.为了便于观察响应式依赖注入的更新,我们可以将parent组件的代码放到根组件实例中,这样Console窗口中就可以通过修改vm.msg的值来观察child组件的模板内容的重新渲染.
+现在如果修改parent组件的msg属性的值,则会引起child组件中注入的message属性的更改。为了便于观察响应式依赖注入的更新,我们可以将parent组件的代码放到根组件实例中,这样Console窗口中就可以通过修改vm.msg的值来观察child组件的模板内容的重新渲染。
 
 修改上例,代码如下:
 ```
@@ -804,6 +804,57 @@ computedSetter.html
 </body>
 </html>
 ```
-在Chrome浏览器中的显示效果请自行查看.
+在Chrome浏览器中的显示效果请自行查看。
 
 ## 11.6 逻辑提取和重用
+
+当涉及跨组件提取和重用逻辑时，组合API非常灵活。组合函数并不依赖于this，而只依赖于它的参数和全局导入的Vue API。只需将组合逻辑导出为函数，就可以重用组件逻辑的任何部分，甚至可以通过导出组件的整个setup()函数实现扩展功能。
+
+我们看一下跟踪鼠标的例子，由于跟踪鼠标的功能会在多个组件中用到，所以将它的实现逻辑提取出来，封装为一个函数并导出。代码如下所示：
+```
+//mouse.js
+
+import { ref, onMounted, onUnmounted } from 'vue'
+
+export function useMousePosition() {
+    const x = ref(0)
+    const y = ref(0)
+
+    function update(e) {
+        x.value = e.pageX
+        y.value = e.pageY
+    }
+
+    onMounted(() => {
+        window.addEventListener('mousemove', update)
+    })
+
+    onUnmounted(() => {
+        window.removeEventListener('mousemove', update)
+    })
+
+    return { x, y }
+}
+```
+接下来在组件中使用useMousePosition()函数。代码如下：
+```
+import { useMousePosition } from './mouse'
+
+export default {
+    setup() {
+        const { x, y } = useMousePosition()
+        //其他逻辑...
+        return { x, y }
+    }
+}
+```
+与其他重用组件逻辑的方式相比，使用组合API的好处如下：
++ 暴露给模板的属性有明确的来源，因为它们是从组合函数返回的值。
++ 组合函数返回的值可以任意命名，这样就不会发生命名空间冲突。
++ 不需要为逻辑重用而创建不必要的组件实例。
+
+## 11.7 小结
+
+本章介绍了Vue3.0新增的组合API，组合API为用户组织组件代码提供了更大的灵活性，可以很方便地在多个组件之间提取和重用业务逻辑。
+
+组合API也可以与现有的基于选项的API一起使用，不过组合API是在选项（data、computed和methods）之前解析，因此在组合API中是无法访问这些选项所定义的属性的。
