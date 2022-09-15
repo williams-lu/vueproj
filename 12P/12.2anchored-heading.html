@@ -1,0 +1,39 @@
+<!-- 12.2 render()函数 anchored-heading.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12.2 render()函数 anchored-heading.html</title>
+</head>
+<body>
+    <div id="app">
+        <anchored-heading :level="1">Hello world!</anchored-heading>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script>
+        const app = Vue.createApp({});
+
+        app.component('anchored-heading', {
+            render() {
+                const { h } = Vue;
+
+                return h(
+                    'h' + this.level,   // tag name
+                    {},  // props/attributes
+                    this.$slots.default()  // array of children
+                )
+            },
+            props: {
+                level: {
+                    type: Number,
+                    required: true,
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>

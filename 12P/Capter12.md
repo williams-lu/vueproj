@@ -90,7 +90,7 @@ app.component('anchored-heading', {
     }
 })
 ```
-代码是不是精简了很多，熟悉Reac开发的读者是不是感到似曾相识。
+代码是不是精简了很多，熟悉React开发的读者是不是感到似曾相识。
 
 $slot用于以编成方式访问由插槽分发的内容。每个命名的插槽都有相应的属性（例如，v-slot:foo的内容将在this.$slots.foo()中找到）。this.$slots.default()属性包含了所有未包含在命名插槽中的节点或v-slot:default的内容。
 
@@ -152,5 +152,71 @@ h(
 
 anchored-heading2.html
 ```
-//递归
+//递归调用将子节点的文本内容拼接成一个字符串
+function getChildrenTextContent(children) {
+    return children
+        .map(node => {
+            return typeof node.children === 'string'
+            ? node.children
+            : Array.isArray(node.children)
+                ? getChildrenTextContent(node.children)
+                : ''
+        })
+        .join('')
+};
+app.component('anchored-heading', {
+    render() {
+        //从子节点的文本内容创建kebab-case风格的ID
+        const headingId = getChildrenTextContent(this.$slots.default())
+            .toLowerCase()
+            .replace(/\W+/g, '-')    //将非单词字符替换为短划线
+            .replace(/(^-|-$)/g, '')   //删除前导和尾随的短横线
+
+        return Vue.h('h' + this.level, [
+            Vue.h(
+                'a',
+                {
+                    name: headingId,
+                    href: '#' + headingId,
+                },
+                this.$slots.default()
+            )
+        ])
+    },
+    props: {
+        level: {
+            type: Number,
+            required: true,
+        }
+    }
+})
 ```
+之后就可以按照以下方式使用anchored-heading组件。
+```
+<anchored-heading :level="3">
+    Hello world!
+</anchored-heading>
+```
+组件树中的所有VNode必须是唯一的。例如，下面的render()函数时不合法的。
+```
+render() {
+    const myParagraphVNode = Vue.h('p', 'hi')
+    return Vue.h('div', [
+        // 错误 - 重复的VNode
+        myParagraphVNode, myParagraphVNode
+    ])
+}
+```
+如果真的需要重复很多相同的元素或组件，可以使用工厂函数实现。例如，下面的render()函数用完全合法的方式渲染了20个相同的段落。
+```
+render() {
+    return Vue.h('div',
+        Array.apply(null, { length: 20 }).map(() => {
+            return Vue.h('p', 'hi')
+        })
+    )
+}
+```
+
+## 12.3 用普通JavaScript代替模板功能
+
