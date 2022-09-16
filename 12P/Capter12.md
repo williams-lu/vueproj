@@ -220,3 +220,247 @@ render() {
 
 ## 12.3 用普通JavaScript代替模板功能
 
+原先在模板中可以使用的一些功能在render()函数中没有再提供，需要我们自己编写JavaScript代码来实现。
+
+### 12.3.1 v-if和v-foobar
+
+只要普通JavaScript能轻松完成的操作，Vue的render()函数就没有提供专用的替代方案。例如，在使用v-if和v-for的模板中：
+```
+<ul v-if="items.length">
+    <li v-for="item in items">{{ item.name }}</li>
+</ul>
+<p v-else>No Item found.</p>
+```
+在render()函数中可以使用JavaScript的if/else和map实现相同的功能。代码如下：
+```
+props: ['items'],
+render() {
+    if(this.items.length) {
+        return Vue.h('ul', this.items.map((items) => {
+            return Vue.h('li', item.name)
+        }))
+    }
+    else {
+        return Vue.h('p', 'No items found.')
+    }
+}
+```
+
+### 12.3.2 v-model
+
+在render()函数中没有与v-model指令直接对应的实现方案，不过v-model指令在模板编译期间会被扩展为modelValue和onUpdate:modelValue prop,按照v-model的内在逻辑，我们自己实现即可。代码如下：
+```
+props: ['modelValue'],
+render() {
+    return Vue.h(SomeComponent, {
+        modelValue: this.modelValue,
+        'onUpdate:modelValue': value => this.$emit('update:modelValue', value)
+    })
+}
+```
+
+### 12.3.3 v-onUpdate
+
+我们必须为事件处理程序提供一个正确的prop名称。例如，要处理click事件，prop名称应该是onClick。代码如下：
+```
+render() {
+    return Vue.h('div', {
+        onClick: $event => console.log('children', $event.target)
+    })
+}
+```
+
+### 12.3.4 事件和按键修饰符
+
+对于.passive、.capture和.once这些事件修饰符，可以使用驼峰命名法将他们连接到事件名之后。代码如下所示：
+```
+render() {
+    return Vue.h('input', {
+        onClickCapture: this.doThisInCapturingMode,
+        onKeyupOnce: this.doThisOnce,
+        onMouseoverOnceCapture: this.doThisOnceInCapturingMode,
+    })
+}
+```
+对于其他的事件和按键修饰符，则不需要特殊的API，因为在处理程序中可以使用事件方法实现相同的功能，如下表。
+
+与修饰符等价的事件方法
+
+修饰符  |    处理函数中的等价操作
+------------------|-----------------------------------|
+.stop   |   event.stopPropagation() |
+.prevent|   event.preventDefault()  |
+.self   |   if(event.target!==event.currentTarget)return
+按键：.enter、.13|    if(event.keyCode!==13)return(对于其他的按键修饰符，可将13改成其对应的按键码)|
+修饰键：.ctrl、.alt、.shift、.meta |    if(!event.ctrlKey)return(可将ctrlKey分别修改为altKey、shiftKey或metaKey)
+
+下面是一个使用所有修饰符的例子。
+```
+render() {
+    return Vue.h('input', {
+        onKeyUp: event => {
+            //如果触发事件的元素不是事件绑定的元素，则返回
+            if (event.target !== event.currentTarget) return
+            //如果按下的不是Enter键（13）或没有同时按下Shift键，则返回
+            if(!event.shiftKey || event.keyCode !== 13) return
+            //阻止事件传播
+            event.stopPropagation()
+            //阻止该元素默认的keyup事件处理
+            event.preventDefault()
+            //...
+        }
+    })
+}
+```
+
+### 12.3.5 插槽
+
+通过this.$slots可以访问插槽的内容，插槽的内容是VNode数组。代码如下：
+```
+render() {
+    //`<div><slot></slot></div>`
+    return Vue.h('div', {}, this.$slots.default())
+}
+
+//访问作用域插槽
+props: ['message'],
+render() {
+    //`<div><slot :text="message"></slot></div>`
+    return Vue.h('div', {}, this.$slots.default({
+        text: this.message
+    }))
+}
+```
+如果要使用render()函数将插槽传递给子组件，可以编写下面的代码：
+```
+render() {
+    //`<div><child v-slot="props"><span>{{ props.text }}</span></child></div>`
+    return Vue.h('div', {
+        Vue.h(
+            Vue.resolveComponent('child'),
+            {},
+            //将slots作为对象传递
+            //格式为：{ name: props => VNode | Array<VNode> }
+            {
+                default: (props) => Vue.h('span', props.text)
+            }
+        )
+    })
+}
+```
+
+## 12.4 JSX
+
+相信读者发现，即使是简单的模板，在render()函数中编写也很复杂，而且模板中的DOM解构面目全非，可读性很差。当模板比较复杂，元素之间嵌套的层级较多时，在render()函数中一层层嵌套的h()函数也令人迷惑。
+
+熟悉React框架的读者应该知道，React的render()函数使用JSX语法来简化模板的编写，使模板的编写变得和普通DOM模板一样。在Vue.js中，可以通过一个Babel插件（https://github.com/vuejs/jsx-next)让Vue支持JSX语法，从而简化render()函数中的模板创建。
+
+>提示：<br>
+>JSX的全称是JavaScript XML，是一种JavaScript的语法扩展，用于描述用户界面。其格式比较像是模板语言，但事实上完全是在JavaScript内部实现的。
+
+例如，对于下面DOM结构：
+```
+<anchored-heading :level="1">
+    <span>Hello</span> World!
+</anchored-heading>
+```
+不使用JSX语法的render()函数实现如下：
+```
+import AnchoredHeading from './AnchoredHeading.vue'
+
+const app = createApp({
+    render() {
+        return (
+            <AnchoredHeading level={1}>
+                <span>Hello</span> Wrold!
+            </AnchoredHeading>
+        )
+    }
+})
+
+app.mount('#demo')
+```
+JSX的语法自行查阅。
+
+## 12.5 实例：使用render()函数实现帖子列表
+
+10.3小节给出了一个BBS项目的帖子列表组件的实例，本节使用render()函数改写该实例。
+
+首先是单个帖子的组件PostListItem。代码如下:
+
+PostListItem
+```
+app.component('PostListItem', {
+    props: {
+        post: {
+            type: Objecj,
+            required: true
+        }
+    },
+    render() {
+        return Vue.h('li', {
+            Vue.h('p', [
+                Vue.h('span',
+                    //这是<span>元素的内容
+                    '标题：' + this.post.title + ' | 发帖人：' + this.post.author
+                    + ' | 发帖时间：' + this.post.date + ' | 点赞数：' + this.post.vote
+                ),
+                Vue.h('button', {
+                    //单击按钮，向父组件提交自定义事件vote
+                    onClick: () => this.$emit('vote')
+                }, '赞')
+            ])
+        });
+    }
+})
+```
+这部分代码最好结合10.3小节的例一起来看。一定要清楚h()函数的3个参数的作用，因为后两个参数是可选的，所以要注意区分代码中哪部分是第二个参数传参，哪部分是第三个参数传参。简单的区分方式就是看是对象传参还是数组传参，如果是对象传参，就是第二个参数（设置元素的属性信息）；如果是数组传参，就是第三个参数（设置子节点信息）。
+
+帖子列表组件PostList的代码如下：
+
+PostList
+```
+//父组件
+app.component('PostList', {
+    data() {
+        return {
+            posts: [
+                { id: 1, title: '《Servlet/JSP深入详解》', author: '张三', date: '2019-10-21 20:10:15', vote: 0 },
+                { id: 1, title: '《VC++深入详解》', author: '李四', date: '2019-10-11 20:10:15', vote: 0 },
+                { id: 1, title: '《Vue深入详解》', author: '王五', date: '2020-10-21 20:10:15', vote: 0 },
+            ]
+        }
+    },
+    methods: {
+        //自定义事件vote的事件处理器方法
+        handleVote(id) {
+            this.posts.map(item => {
+                item.id === id ? { ...item, vote: ++item.vote } : item;
+            })
+        }
+    },
+    render() {
+        let postNodes = [];
+        //this.posts.map取代v-for指令，循环遍历posts
+        //构造子组件的虚拟节点
+        this.posts.map(post => {
+            let node = Vue.h(Vue.resolveComponent('PostListItem'), {            //这是针对子组件的处理方式
+                post: post,                                                   //这是针对子组件的处理方式
+                onVote: () => this.handleVote(post.id)                       //这是针对子组件的处理方式
+            });
+            postNodes.push(node);
+        })
+        return Vue.h('div', [
+            Vue.h('ul', [postNodes])
+        ]);
+    },
+})
+```
+
+## 12.6 小结
+
+本章介绍了虚拟节点和虚拟DOM，并详细介绍了render()函数，实际上，Vue的模板也是被编译成了render()函数。
+
+render()函数中最重要的就是h()函数，重点是要理解h()函数的3个参数的作用，这样才能正确使用它。
+
+从本章给出的例子可以看出，即使是简单的模板，在render()函数中编写也很复杂，而且模板中的DOM解构面目全非，可读性很差。当模板比较复杂，元素之间嵌套的层级较多时，在render()函数中一层层嵌套的h()函数会使开发效率变得很低，还容易出错。所以在基于Vue.js的前端开发项目中，最好还是始终采用template方式，如果特殊情况下需要使用render()，也建议使用JSX语法简化模板的编写。
