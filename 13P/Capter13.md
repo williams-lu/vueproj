@@ -1,6 +1,6 @@
 # 第13章 Vue CLI
 
-在开发大型单页应用时,需要考虑项目的组织结构、项目构建、部署、热加载、代码单元测试等多方面与核心业务逻辑无关的事情,对于项目中用到的构建工具\\代码检查工具等还需要一遍一遍地重复配置。显然,这很浪费时间,影响开发效率.为此,我们会选择一些能够创建脚手架的工具,来帮助搭建一个项目的框架,并进行一些项目所依赖的初始配置。
+在开发大型单页应用时,需要考虑项目的组织结构、项目构建、部署、热加载、代码单元测试等多方面与核心业务逻辑无关的事情,对于项目中用到的构建工具\\代码检查工具等还需要一遍一遍地重复配置。显然,这很浪费时间,影响开发效率。为此,我们会选择一些能够创建脚手架的工具,来帮助搭建一个项目的框架,并进行一些项目所依赖的初始配置。
 
 在Vue.js环境中,这个脚手架工具就是Vue CLI,利用这个工具,可以自动生成一个基于Vue.js的单页应用的脚手架项目。
 
@@ -50,7 +50,7 @@ vue --version
 >提示:<br>
 >项目名中不能有大写字母
 
-首先会让你选择一个preset(预设),第1和第2个选项是默认设置,适合快速创建项目的原型,在本书中,我们不会用到第一个选项,因为它是针对vue 2.x版本的.第3个选项需要手动对项目进行配置,适合有经验的开发者.这里使用方向下选择第3项,然后按Enter键,出现项目的配置选项，如下图。
+首先会让你选择一个preset(预设),第1和第2个选项是默认设置,适合快速创建项目的原型,在本书中,我们不会用到第一个选项,因为它是针对vue 2.x版本的。第3个选项需要手动对项目进行配置,适合有经验的开发者。这里使用方向下选择第3项,然后按Enter键,出现项目的配置选项，如下图。
 
 ![](images/13.3manually-1.png)
 
@@ -77,7 +77,7 @@ E2E Testing | 端到端测试 |
 
 ![](images/13.3code_formatter.png)
 
-第1个选项是指ESLint仅用于错误预防,后3个选项是选择ESLint和哪一个代码规范一起使用.ESLint是用于代码校验的,至于代码风格,则由另外的规范来限制,如这里的Airbnb config、Standard config和Prettier.至于选择哪一种代码规范,这要看个人的喜好或公司的要求.这里先保持默认选择,即第1个选项ESLint with error prevention only。
+第1个选项是指ESLint仅用于错误预防,后3个选项是选择ESLint和哪一个代码规范一起使用.ESLint是用于代码校验的,至于代码风格,则由另外的规范来限制,如这里的Airbnb config、Standard config和Prettier。至于选择哪一种代码规范,这要看个人的喜好或公司的要求。这里先保持默认选择,即第1个选项ESLint with error prevention only。
 
 接下来是选择合适检测代码
 
@@ -226,7 +226,7 @@ export default {
 }
 </style>
 ```
-这就是一个典型的单文件组件,在一个文件中包含了组件代码\\模板代码和CSS样式规则.这个组件引入了HelloWorld组件,然后在\<template\>元素中使用它.使用export语句将App组件作为模板的默认值导出。
+这就是一个典型的单文件组件,在一个文件中包含了组件代码、模板代码和CSS样式规则。这个组件引入了HelloWorld组件,然后在\<template\>元素中使用它.使用export语句将App组件作为模板的默认值导出。
 
 App组件是项目的主组件,可以替换它,也可以保留它.如果保留,就是修改代码中的导入语句,将其替换为导入的组件即可。
 
@@ -313,5 +313,61 @@ export default {
 
 这是一个JSON格式的npm配置文件，定义了项目所需要的各种模块，以及项目的配置信息（如名称、版本、许可证等元数据），在项目开发中经常会修改该文件的配置内容，所以单独对这个文件的内容说明一下。代码如下：
 ```
-
+{
+  "name": "helloworld",    //项目名称
+  "version": "0.1.0",       //项目版本
+  "private": true,        //是否私有项目
+  "scripts": {            //值是一个对象，其中指定了项目生命周期各个环节需要执行的命令
+    "serve": "vue-cli-service serve",         //执行npm run serve,运行项目
+    "build": "vue-cli-service build",         //执行npm run build,构建项目
+    "lint": "vue-cli-service lint"           //执行npm run lint, 运行ESLint验证并格式化代码
+  },
+  "dependencies": {                   //配置项目依赖的模块列表，key是模块名称，value是版本范围
+    "core-js": "^3.6.5",
+    "vue": "^3.0.0"
+  },
+  "devDependencies": {               //这里的依赖是用于开发环境的，不发布到生产环境
+    "@vue/cli-plugin-babel": "~4.5.15",
+    "@vue/cli-plugin-eslint": "~4.5.15",
+    "@vue/cli-service": "~4.5.15",
+    "@vue/compiler-sfc": "^3.0.0",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^6.7.2",
+    "eslint-plugin-vue": "^7.0.0"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/vue3-essential",
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "parser": "babel-eslint"
+    },
+    "rules": {}
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}
 ```
+在使用npm安装依赖的模块时，可以根据模块是否需要在生产环境下使用而选择附加-S（即--save,生产环境）或-D（即 --save-dev,开发环境）参数。例如，项目中使用了界面UI组件库element-ui，它肯定是要在生产环境中用到的，就可以执行下面的命令来安装。
+```
+npm install element-ui -S
+//等同于
+npm install element-ui --save
+```
+安装后会在dependencies中写入依赖项，在项目打包发布时，dependencies中写入的依赖项也会一起打包。
+
+如果某个模块只是在开发环境中使用，则可以使用-D参数安装，在安装完成后将依赖项写入devDependencies,而在devDependencies中的依赖项，在项目打包发布时并不会一起打包。
+
+在发布代码时，项目下的node_modules目录下都不会发布，那么在下载了别人的代码后，怎样安装依赖呢？这时可以在项目路径下执行npm install命令，该命令会根据package.json文件下载所需要的依赖。
+
+## 13.7 小结
+
+Vue CLI这一创建Vue脚手架项目的有用工具，熟练使用该工具，可以快速搭建符合项目要求的框架程序；同时介绍了脚手架项目中的一些重要配置文件，以及脚手架项目的结构，方便使用者上手

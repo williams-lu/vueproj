@@ -11,7 +11,7 @@ Vite是在推出Vue3.0时开发,目前仅支持Vue3.x,也就是与Vue3.0不兼�
 
 ## 19.1 使用Vite
 
-与Vue CLI类似,Vite也提供npm或yarn命令生成项目结构的方式.选择一个目录,打开命令提示符窗口,依次执行下面的命令构建脚手架项目,并启动项目:
+与Vue CLI类似,Vite也提供npm或yarn命令生成项目结构的方式。选择一个目录,打开命令提示符窗口,依次执行下面的命令构建脚手架项目,并启动项目:
 ```
 npm init vite-app <project-name>
 cd <project-name>
@@ -27,7 +27,7 @@ yarn dev
 ```
 由于Vite使用了浏览器原生的ES模块导入功能,但IE11并不支持ES的模块导入,因此基于Vite开发项目,浏览器不能使用IE11浏览器。
 
-可以发现,Vite生成的脚手架项目的目录结构与Vue CLI生成的项目目录结构很类似,开发方式也基本相同.不过Vite项目的默认配置文件是vite.config.js,而不是vue.config.js.
+可以发现,Vite生成的脚手架项目的目录结构与Vue CLI生成的项目目录结构很类似,开发方式也基本相同.不过Vite项目的默认配置文件是vite.config.js,而不是vue.config.js。
 
 package.json文件的内容如下:
 ```
@@ -55,7 +55,7 @@ npm run build
 
 ## 19.2 与Vue CLI的不同
 
-Vite与Vue CLI的主要区别在于,对于Vite在开发过程中没有捆绑.源代码中的ES Import语法直接提供给浏览器,浏览器通过原生的\<script module\>支持解析这些语法,并每次导入发起HTTP请求.dev服务器拦截请求,并在必要时执行代码转换.例如,导入到*.vue文件的内容在发送回浏览器之前被即时编译.
+Vite与Vue CLI的主要区别在于,对于Vite在开发过程中没有捆绑.源代码中的ES Import语法直接提供给浏览器,浏览器通过原生的\<script module\>支持解析这些语法,并每次导入发起HTTP请求.dev服务器拦截请求,并在必要时执行代码转换.例如,导入到*.vue文件的内容在发送回浏览器之前被即时编译。
 
 这种方法有以下优点:
 + 因为没有打包工作要做,所以服务器冷启动非常快
