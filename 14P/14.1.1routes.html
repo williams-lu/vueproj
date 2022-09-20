@@ -1,0 +1,58 @@
+<!-- 14.1.1 HTML页面使用路由routes.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>14.1.1 HTML页面使用路由</title>
+</head>
+<body>
+    <div id="app">
+        <p>
+            <!-- 使用router-link组件导航 -->
+            <!-- 通过传入to属性指定链接 -->
+            <!-- <router-link>默认会被渲染成一个<a>标签 -->
+            <router-link to="/">主页</router-link>
+            <router-link to="/news">新闻</router-link>
+            <router-link to="/books">图书</router-link>
+            <router-link to="/videos">视频</router-link>
+        </p>
+        <!-- 路由出口 -->
+        <router-view></router-view>
+    </div>
+
+    <script src="https://unpkg.com/vue@next"></script>
+    <script src="https://unpkg.com/vue-router@next"></script>
+    <script>
+        //定义路由组件
+        //可以从其他文件import进来
+        const Home = { template: '<div>主页面</div>' }
+        const News = { template: '<div>新书页面</div>' }
+        const Books = { template: '<div>图书页面</div>' }
+        const Videos = { template: '<div>视频页面</div>' }
+
+        //定义路由
+        //每个路由应该映射到每一个组件
+        const routes = [
+            { path: '/', component: Home },
+            { path: '/news', component: News },
+            { path: '/books', component: Books },
+            { path: '/videos', component: Videos },
+        ]
+
+        //传递routes选项，创建router实例
+        const router = VueRouter.createRouter({
+            //提供要使用的history实现。简单起见，在这里使用hash history
+            history: VueRouter.createWebHashHistory(),
+            routes // (简写)相当于routes: routes
+        })
+
+        const app = Vue.createApp({})
+        //使用路由器实例，从而让整个应用都有路由功能
+        app.use(router);
+        app.mount('#app');
+    </script>
+</body>
+</html>
