@@ -383,3 +383,190 @@ const routes = [
 ]
 ```
 ### 14.3.2 可重复参数
+
+可以使用修饰符"*"(零个或多个)、"+"(一个或多个)将参数标记为可重复的。代码如下所示：
+```
+const routes = [
+    // /:chapters -> 匹配 /one, /one/two, /one/two/three, etc
+    { path: '/:chapters+' },
+    // /:chapters -> 匹配 /, /one, /one/two, /one/two/three, etc
+    { path: '/:chapters*' },
+]
+```
+这将给出一个params数组而不是字符串，并且在使用命名路由(参看4.5小节)时也需要传递一个数组。代码如下：
+```
+// given { path: '/:chapters*', name: 'chapters' },
+router.resolve({ name: 'chapters', params: { chapters: [] } }).href
+// 结果：/
+router.resolve({ name: 'chapters', params: { chapters: ['a', 'b'] } }).href
+// 结果： /a/b
+
+// given { path: '/:chapters+', name: 'chapters' },
+router.resolve({ name: 'chapters+', params: { chapters: [] } }).href
+// 因为chapters是空，这将抛出一个错误
+```
+还可以通过将"*"和"+"添加到有括号后，与自定义正则表达式结合使用。
+```
+const routes = [
+    // 只匹配数字
+    { path: '/:chapters(\\d+)+' },
+    { path: '/:chapters(\\d+)*' },
+]
+```
+
+### 14.3.3 可选参数
+
+还可以使用"?"将参数标记为可选的。代码如下：
+```
+const routes = [
+    // 匹配 /users 和 /users/posva
+    { path: '/users/:userId?' },
+    // 匹配 /users 和 /users/42
+    { path: '/users/:userId(\\d+)?' },
+]
+```
+
+## 14.4 嵌套路由
+
+在实际的应用场景中，一个界面UI通常由多层嵌套的组件组合而成，URL中的各段也按某种结构对应嵌套的各层组件，
+
+路径user/:id映射到User组件，根据ID的不同，显示不同的用户信息。ID为1的用户单击链接user/1/profile,将在用户1的视图中渲染Profile组件；单击链接user/1/posts，将在用户1的视图中渲染Posts组件。
+
+继续14.2小节的例子(将例子恢复为动态段)，当单击“图书”链接时，以列表形式显示所有图书的书名，进一步单击单个书名链接，在Books视图中显示图书的详细信息。这可以通过嵌套路由来实现。
+
+在assets目录下新建一个books.js文件，里面是图书数据。代码如下：
+
+book.js
+```
+export default [
+    { id: 1, title: 'vue教程', desc: '学Vue' },
+    { id: 2, title: 'V++教程', desc: '畅销书' },
+    { id: 3, title: 'Servlet/JSP教程', desc: '经典JSP' },
+]
+```
+这里硬编码了图书数据，只是为了演示需要，真实场景中，图书数据应该是通过Ajax请求从服务器端加载得到。
+
+修改Books.vue，以列表方式显示图书馆，添加导航链接，并使用\<router-view\>指定Book组件渲染的位置。代码如下：
+```
+<template>
+    <div>
+        <h3>图书列表</h3>
+        <ul>
+            <li v-for="book in books" :key="book.id">
+                <router-link :to="'/book/'+book.id">{{ book.title }}</router-link>
+            </li>
+        </ul>
+        <!-- Book组件在这里渲染 -->
+        <router-view></router-view>
+    </div>
+</template>
+
+<script>
+//导入Books数组
+import Books from '@/assets/books'
+export default {
+    data() {
+        return {
+            books: Books
+        }
+    }
+}
+</script>
+```
+
+记得删除App.vue中图书1和图书2的\<router-link\>的配置。
+
+修改router目录下的index.js文件，增加嵌套路由的配置并删除index.js的部分配置。代码如下
+
+index.js
+```
+...
+import Book from '@/components/Book'
+...
+const router = createRouter({
+    routes: [
+        ...,
+        {
+            path: '/books',
+            component: Books,
+            children: [
+                { path: '/book/:id', component: Book }
+            ]
+        },
+        ...
+    ]
+})
+```
+说明：
+(1)要在嵌套的出口（即Books组件中的\<router-view\>）中渲染组件，需要在routes选项的配置中使用children选项。children选项只是路由配置对象的另一个数组，如同routes本身一样，因此，可以根据需要继续嵌套路由。
+(2)以"/"开头的嵌套路径被视为根路径。如果上例Books.vue中的导航链接设置的是/books/book/id这种形式，那么这里配置路径时，需要去掉"/"，即{path:'book/:id', component: Book}。
+
+在终端窗口中运行项目，打开浏览器，单击“图书”链接后，任选一本图书。
+
+在实际场景中，当单击某本图书链接时，应该向服务器端发起Ajax请求来获取图书详细数据，于是我们想到在Book组件中通过声明周期钩子函数来实现，然而，这行不通。因为当两个路由都渲染同一个组件时，如同book/1导航到book/2时，Vue会复用先前的Book实例，比起销毁旧实例再创建新实例，复用会更加高效。但是这就意味着组件的生命周期钩子不会再被调用，所以也就无法在声明周期钩子中去根据路由参数的变化更新数据。
+
+要对同一组件中的路由参数更改做出响应，只需监听$route.parems即可。
+
+修改Book.vue，当路由参数变化时，更新图书详细数据。代码如下：
+
+例14.15Book.vue
+```
+<template>
+    <div>
+        <p>图书ID：{{ book.id }}</p>
+        <p>书名： {{ book.title }}</p>
+        <p>说明： {{ book.desc }}</p>
+    </div>
+</template>
+
+<script>
+import Books from '@/assets/books'
+export default {
+    data() {
+        return {
+            book: {}
+        }
+    },
+    created() {
+        this.book = Books.find((item) => item.id == this.$route.params.id);
+
+        this.$watch(
+            () => this.$route.params,
+            (toParams) => {
+                console.log(toParams)
+                this.book = Books.find((item) => item.id == toParams.id);
+            }
+        )
+    }
+}
+</script>
+```
+说明：
+（1）只有路由参数发生变化时，$route.params的监听器才会被调用，这意味着第一次渲染Book组件时，通过$route.params的监听器是得不到数据的，因此在created钩子中先获取第一次渲染时的数据。当然，也可以向$watch方法传入一个选项对象作为第3个参数，设置immediate选项参数为true,使监听器回调函数在监听开始后立即执行，即不需要在created钩子中先获取一次数据。代码如下：
+```
+created() {
+    //this.book = Books.find((item) => item.id == this.$route.params.id);
+    this.$watch(
+        () => this.$route.params,
+        (toParams) => {
+            this.book = Books.find((item) => item.id == toParams);
+        },
+        {
+            immediate: true
+        }
+
+    )
+}
+```
+（2）$route.params监听器回调函数的toParams参数表示即将进入的目标路由的参数，该函数还可以带一个previousParams参数，表示当前导航正要离开的路由的参数。
+
+运行项目，单击不同的图书链接将显示对应图书的详细信息。除了监听$route对象外，还可以利用Vue Router中的导航守卫(navigation guard):beforeRouterUpdate,可以把它理解为时针路由的一个钩子函数。修改例14.15,删除$route.params的监听器，改用beforeRouteUpdate来实现。代码如下所示：
+```
+beforeRouterUpdate(to) {
+    this.book = null;
+    this.book = Books.find((item) => item.id == to.params.id);
+}
+```
+beforeRouterUpdate在当前路由改变，但是该组件被复用时调用。它有两个常用的参数。to表示即将进入的目标路由位置对象；from表示当前导航正要离开的路由位置对象。本来只用到了参数to。
+
+## 14.5 命令路由
