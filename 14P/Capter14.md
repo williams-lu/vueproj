@@ -570,3 +570,301 @@ beforeRouterUpdate(to) {
 beforeRouterUpdate在当前路由改变，但是该组件被复用时调用。它有两个常用的参数。to表示即将进入的目标路由位置对象；from表示当前导航正要离开的路由位置对象。本来只用到了参数to。
 
 ## 14.5 命令路由
+
+有时通过一个名称来标识路由会更方便，特别是在链路到路由，或者执行导航时。可以在创建Router实例时，在routes选项中为路由设置名称。
+
+修改router目录下的index.js,为路由定义名字。代码如例14-16所示。
+
+例14-16 index.js
+```
+...
+const  router = createRouter({
+    history: createWebHashHistory(),
+    routes: [
+        {
+            path: '/',
+            redirect: {
+                name: 'news'
+            }
+        },
+        {
+            path: '/news',
+            name: 'news',
+            component: News
+        },
+        {
+            path: '/books',
+            name: 'books',
+            component: Books
+            children: [
+                { path: '/book/:id', name: 'book', component: Book }
+            ]
+        },
+        {
+            path: '/videos',
+            name: 'videos',
+            component: Videos
+        },
+    ]
+})
+```
+在根路径(/)的配置中，使用redirect参数将对该路径的访问重定向到命名的路由news上。当访问http://localhost:8080/时，将直接跳转到News组件。
+
+以下是重定向的另外两种配置方式。
+```
+{
+    path: '/',
+    //指定目标路径
+    redirect: '/news'
+}
+
+{
+    // /search/screens ->  /search?q=screens
+    path: '/search/:searchText',
+    // 函数接收目标路由作为参数，动态返回重定向目标
+    // 返回值可以是重定向的字符串路径或路径对象
+    redirect: to => {
+        return { path: '/search', query: { q: toParams.searchText } }
+    },
+},
+```
+修改App.vue,在设置导航时使用命名路由。代码如例14-17所示：
+
+例14-17 App.vue
+```
+<template>
+    <p>
+        <router-link to="/">首页</router-link>
+        <router-link :to="{ name: 'news' }">新闻</router-link>
+        <router-link :to="{ name: 'books' }">图书</router-link>
+        <router-link :to="{ name: 'videos' }">视频</router-link>
+    </p>
+    <router-view></router-view>
+</template>
+```
+注意: to属性的值现在是表达式，因此需要使用v-bind指令。
+修改Books.vue,也使用命名路由。代码如例14-18所示。
+
+例14-18 Books.vue
+```
+...
+<ul>
+    <li v-for="book in books" :key="book.id">
+        <router-link :to="{name:'book', params:{id: book.id} }">{{ book.title }}</router-link>
+    </li>
+</ul>
+```
+接下来可以再次运行项目，观察效果，测试效果和前面的例子完全一样。
+
+在路由配置中，还可以为某个路径取个别名。例如：
+```
+routes: [
+    { path: '/a', component: A, alias: '/b' }
+]
+```
+"/a"的别名是"/b"，当用户访问"/b"时，URL会保持为"/b",但是路由匹配是"/a"，就像用户正在访问"/a"一样。
+
+别名的功能可以自由地将UI解构映射到任意的URL，而不受限于配置的嵌套路由结构。
+
+注意别名和重定向的区别，对于重定向而言，当用户访问"/a"时，URL会被替换成"/b"，然后匹配路由为"/b"。
+
+## 14.6 命名视图
+
+有时需要同时(同级)显示多个视图，而不是嵌套展示。例如，创建一个布局，有header（头部）、sidebar(侧边栏)和main(主内容)3个视图，这时命名视图就派上用场了。可以在界面中拥有多个单独命名的视图，而不是只有一个单独的出口。例如：
+```
+<router-view class="view header" name="header"></router-view>
+<router-view class="view sidebar" name="sidebar"></router-view>
+<router-view class="view main"></router-view>
+```
+没有设置名字的router-view,默认为default。
+
+一个视图使用一个组件渲染，因此对于同一个路由，多个视图就需要多个组件。在配置路由时，使用components选项。代码如下所示：
+```
+const router = createRouter({
+    history: createWebHashHistory(),
+    routes: [
+        {
+            path: '/',
+            components: {
+                default: Main,
+                header: Header,
+                sidebar: Sidebar,
+            }
+        }
+    ]
+})
+```
+可以使用带有嵌套视图的命名视图创建复杂的布局，这时是需要命名用到的嵌套router-view组件。
+
+下面来看一个设置面板的示例，如图14-8所示。
+
+![]
+
+在图14-8中，Nav是一个常规组件，UserSettings是一个父视图组件，UserEmailSubscriptions、UserProfile和UserProfilePreview是嵌套的视图组件。
+
+UserSettings组件的模板代码类似如下形式。
+```
+<!-- UserSettings.vue -->
+<div>
+    <h1>User Settings</h1>
+    <NavBar/>
+    <router-view/>
+    <router-view name="helper" />
+</div>
+```
+其他3个组件的模板代码如下：
+```
+<!-- UserEmailsSubscriptions.vue -->
+<div>
+    <h3>Email Subscriptions</h3>
+</div>
+
+<!-- UserProfile.vue -->
+<div>
+    <h3>Edit your profile</h3>
+</div>
+
+<!-- UserProfilePreview.vue -->
+<div>
+    <h3>Preview of your profile</h3>
+</div>
+```
+在路由配置中按照上述布局进行配置。代码如下：
+```
+{
+    path: '/settings',
+    component: UserSettings,
+    children: [
+        {
+            path: 'emails',
+            component: UserEmailsSubscriptions
+        },
+        {
+            path: 'profile',
+            components: {
+                default: UserProfile,
+                helper: UserProfilePreview
+            }
+        }
+    ]
+}
+```
+继续我们的例子，将图书详情信息修改为与Books视图同级显示。
+
+编辑App.vue，添加一个命名视图，代码如例14-19所示。
+
+例14-19 App.vue
+```
+<div id="app"
+    ...
+    <router-view></router-view>
+    <router-view name="bookDetail"><router-view>
+</div>
+```
+修改router目录下的index.js文件，删除Books组件的嵌套路由配置，将Book组件路由设置为顶层路由。代码如例14-20所示。
+
+例14-20 index.js
+```
+...
+{
+    path: '/books',
+    name: 'books',
+    component: Books,
+},
+{
+    path: '/book/:id',
+    name: 'book',
+    component: {bookDetail: Book}
+},
+```
+至于Books组件内的\<router-view\>,删除与否都不影响Book组件的渲染。为了代码的完整性，可以将这些无用的代码注释或删除。
+
+运行项目，可以看到当单击一个图书链接时，图书的详细信息在Books视图同级显示了，如图14-9所示。
+
+## 14.7 编程式导航
+
+除了使用\<router-link\>创建\<a\>标签定义导航链接，还可以使用router的实例方法，通过编写代码来导航。
+
+要导航到不同的URL，可以使用router实例的push()方法。router.push()方法会向history栈添加一个新的记录，所以当用户单击浏览器后退按钮时，将回到之前的URL。
+
+当单击\<router-link\>时，router.push()方法会在内部调用，换句话说，单击\<router-link :to="..."\>等同于调用router.push(...)方法。
+
+router.push()方法的参数可以是字符串路径，也可以是位置描述符对象。调用形式很灵活，代码如下所示：
+```
+//字符串路径
+router.push('home')
+
+//对象
+router.push({ path: 'home' })
+
+//命名的路由
+router.push({ name: 'user', params: { userId: '123' } })
+
+//带查询参数，结果是 /register?plah=private
+router.push({ path: 'register', query: { plan: 'private' } })
+
+//使用hash,结果是 /about#team
+router.push({ path: '/about', hash: '#team' })
+```
+需要注意的是，如果提供了path,params会被忽略。那么对于/book/:id这种形式的路径应该如何调用router.push()方法呢？一种方法是通过命名路由，如上例第3种调用形式；一种方法是在path中提供带参数的完整路径。代码如下：
+```
+const id = 1;
+router.push({ name: 'book', params: { id: book.id } })  //-> /book/1
+router.push({ path: `/book/${id}` }) //-> /book/1
+```
+router.push()方法和所有其他的导航方法都返回一个Promise,允许等待知道导航完成，并知道结果是成功还是失败。
+
+下面继续前面的例子，修改例14-18的Books.vue，用router.push()方法替换\<router-link\>。修改后的代码如例14-21所示。
+
+例14-21 Books.vue
+```
+<div>
+    <h3>图书列表</h3>
+    <ul>
+        <li v-for="book in books" :key="book.id">
+            <a href="#" @click.prevent="goRoute({name:'book', params:{id:book.id} })">
+            {{ book.title }}
+            </a>
+        </li>
+    </ul>
+    <router-view></router-view>
+</div>
+
+<script>
+...
+export default {
+    ...
+    methods: {
+        goRoute(location) {
+            //当单击的URL中的参数id与当前路由对象参数id值不同时，才调用$router.push()方法
+            if(location.params.id != this.$route.params.id)
+                this.$router.push(location)
+        }
+    }
+}
+</script>
+```
+说明：<br>
+（1）在组件实例内部，可以通过this.$router访问路由器实例，进而调用this.$router.push()方法。<br>
+（2）this.$router表示全局的路由器对象，包含了用于路由跳转的方法，其属性currentRoute可以获取当前路由对象；this.$route表示当前路由对象，可以获取对应的name、path、params、query等属性。
+
+除了router.push()方法外，还可以使用router实例的replace()方法进行路由跳转。与push()方法不同的是，replace()方法不会向history添加新纪录，而是替换掉当前的history记录。
+
+replace()方法对应的声明式路由跳转为\<router-link :to="..." replace\>。
+
+也可以在调用push()方法时，在位置对象中指定属性replace:true。代码如下所示：
+```
+router.push({ path: '/home', replace: true })
+// 相当于
+router.replace({ path: '/home' })
+```
+replace()方法与push()方法用法相同，这里不再赘述。
+
+与window.history对象的forward()、back()和go()方法对应的router实例的方法如下：
+```
+router.forward()
+router.back()
+router.go(n)
+```
+
+## 14.8 传递prop到路由组件
