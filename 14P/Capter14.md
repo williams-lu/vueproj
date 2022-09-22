@@ -868,3 +868,109 @@ router.go(n)
 ```
 
 ## 14.8 传递prop到路由组件
+
+在组件中使用$route会导致与路由的紧密耦合,这限制了组件的灵活性,因为它只能在某些URL上使用.虽然这并不一定是坏事,但我们可以用一个props选项来解耦.代码如下所示:
+```
+const User = {
+    template: '<div>User {{ $route.params.id }}</div>'
+}
+const routes = [{ path: '/user/:id', component: User }]
+```
+我们可以为User组件添加一个id prop,来避免硬编码$route.params.id.修改后的代码如下所示:
+```
+const User = {
+    props: ['id'],
+    template: '<div>User {{ id }}</div>'
+}
+const routes = [{ path: '/user/:id', component: User, props: true }]
+```
+在配置路由时,新增一个props选项,将它的值设置为true.当路由到User组件时,会自动获取$route.params.id的值作为User组件的id prop的值.
+
+对于带有命名视图的路由,必须为每个命名视图定义props选项.代码如下所示:
+```
+const routes = [
+    {
+        path: '/user/:id',
+        components: { default: User, sidebar: Sidebar },
+        props: { default: true, sidebar: false },
+    }
+]
+```
+当props是一个对象时,它将按原样设置为组件props,这在props是静态的时候很有用.代码如下所示:
+```
+const routes = [
+    {
+        path: '/promotion/from-newsletter',
+        component: Promotion,
+        props: { newsletterPopup: false },
+    }
+]
+```
+也可以创建一个返回props的函数,可以将参数转换为其他类型,或者将静态值与基于路由的值相结合.代码如下所示:
+```
+const routes = [
+    {
+        path: '/search',
+        component: SearchUser,
+        props: route => ({ query: route.query.q }),
+    }
+]
+```
+访问URL: /search?q=vue,会将{query: 'vue'}作为prop传递给SearchUser组件.
+尽量保持props函数为无状态的,以为它值在路由更改时计算.
+
+## 14.9 HTML5 history模式
+
+前面例子中我们使用的是hash模式,这种模式是通过调用createWebHashHistory()函数创建的,这会在URL中使用"#"标识要跳转目标的路径,如果你觉得这样URL很难看,影响心情,那么可以使用HTML5 history模式.
+
+HTML5 history模式是通过调用createWebHistory()函数创建的.代码如下所示:
+```
+import { createRouter, createWebHistory } from 'vue-router'
+
+const router = createRouter({
+    history: createWebHistory(),
+    routes: [
+        ...
+    ],
+})
+```
+继续前面的例子,修改router目录下index.js文件,将路由改为HTML5 history模式.代码如例14-22所示.
+
+例14-22 index.js
+```
+import { createRouter, createWebHistory } from 'vue-router'
+...
+const router = createRouter({
+    history: createWebHistory(),
+    ...
+})
+```
+再次运行项目,所有的URL都没有"#"了.
+
+不过history模式也有一个问题,当在浏览器地址栏中直接输入URL或刷新页面时,因为该URL是正常的URL,所以浏览器会解析该URL向服务器发起请求,如果服务器没有针对该URL的响应,就会出现404错误.在HTML5 history模式下,如果是通过导航链接来路由页面,Vue Router会在内部截获单击事件,通过JavaScript操作window.history改变浏览器地址栏中的路径,在这个过程中并没有发起HTTP请求,所以就不会出现404错误.
+
+如果使用HTML5 history模式,那么需要在前端程序部署的Web服务器上配置一个覆盖所有情况的备选资源,即当URL匹配不到任何资源时,返回一个固定的index.html页面,这个页面就是单页应用程序的主页面.
+
+Vue Router的官网给出了一些常用的Web服务器的配置,网址如下.<br>
+<a src="https://next.router.vuejs.org/guide/essentials/history-mode.html">https://next.router.vuejs.org/guide/essentials/history-mode.html</a>
+
+如果使用Tomcat作为前端程序的Web服务器,可以在根目录下新建一个WEB-INF子目录,在其下新建一个web.xml文件.代码如下所示:
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://xmlns.jcp.org/xml/ns/javaee"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+                     http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+ version="4.0>
+    <error-page>
+        <error-code>404</error-code>
+        <location>/index.html</location>
+    </error-page>
+</web-app>
+```
+按照上述配置后,Tomcat服务器就不会再返回404错误页面,对于所有不匹配的路径就会返回index.html页面.
+
+>提示:<br>
+>在基于Vue脚手架项目的开发中,内置的Node服务器本身也支持HTML5 history模式,所以开发时一般不会出现问题.
+
+## 14.10 导航守卫
