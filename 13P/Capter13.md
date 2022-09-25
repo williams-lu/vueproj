@@ -196,8 +196,9 @@ Vue CLI生成的项目的目录结构及各目录和文件的用途说明如下:
 |--package-lock.json   //用于锁定项目实际安装的各个npm包的具体来源和版本号
 |--README.md         //项目说明文件
 ```
+看一下几个关键文件的代码。例13-1所示。
 
-App.vue
+例13-1 App.vue
 ```
 <template>
   <img alt="Vue logo" src="./assets/logo.png">
@@ -230,9 +231,9 @@ export default {
 
 App组件是项目的主组件,可以替换它,也可以保留它.如果保留,就是修改代码中的导入语句,将其替换为导入的组件即可。
 
-main.js是程序入口JavaScript文件,该文件主要用于加载各种公共组件和项目需要用到的各种插件,并创建Vue的根实例。
+main.js是程序入口JavaScript文件,该文件主要用于加载各种公共组件和项目需要用到的各种插件,并创建Vue的根实例。例13-2所示。
 
-main.js
+例13-2 main.js
 ```
 import { createApp } from "vue";
 import App from "./App.vue";
@@ -243,9 +244,9 @@ createApp(App).mount("#app");
 
 接下来使用import语句引入App组件,调用createApp方法创建应用程序实例,调用mount方法在id为app的DOM元素上装载应用程序实例的根组件。
 
-项目的主页面index.html的代码如下例。
+项目的主页面index.html的代码如例13-3所示。
 
-index.html
+例13-3 index.html
 ```
 <!DOCTYPE html>
 <html lang="">
@@ -269,7 +270,9 @@ index.html
 
 ## 13.5 编写一个Hello组件
 
-根据上面的项目，在左边窗口可以看到项目的目录结构，右击components目录，从弹出的快捷菜单中选择【新建文件】选项，输入Hello.vue，创建一个单文件组件。编写如下代码：
+根据上面的项目，在左边窗口可以看到项目的目录结构，右击components目录，从弹出的快捷菜单中选择【新建文件】选项，输入Hello.vue，创建一个单文件组件。编写代码如例13-4所示。
+
+例13-4 Hello.vue
 ```
 <template>
     <p>{{ message }}</p>
@@ -285,9 +288,9 @@ export default {
 }
 </script>
 ```
-打开App.vue文件，将HelloWorld组件替换为Hello组件。修改的代码如下：
+打开App.vue文件，将HelloWorld组件替换为Hello组件。修改的代码如例13-5所示。
 
-App.vue
+例13-5 App.vue
 ```
 <template>
     <Hello />

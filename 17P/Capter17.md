@@ -77,9 +77,238 @@
 
 ### 17.7.3 Book组件
 
+Book组件作为页面级组件，放在views目录下，在该目录下新建Book.vue。代码如例17-23所示。
+
+例17-23 Book.vue
+```
+<template>
+    <div class="book">
+        <img :src="book.bigImgUrl" />
+        <div>
+            <div class="bookInfo">
+                <h3>{{ book.title }}</h3>
+                <p>{{ book.slogan }}</p>
+                <p>
+                    <span>作者: {{ book.author }}</span>
+                    <span>出版社: {{ book.bookConcern }}</span>
+                    <span>出版日期：{{ book.publishDate }}</span>
+                </p>
+                <p>
+                    <span class="factPrice">
+                        {{ currency(factPrice(book.price, book.discount)) }}
+                    </span>
+                    <span class="discount">
+                        [{{ formatDiscount(book.discount) }}]
+                    </span>
+                    <span>[定价 <i class="price">{{ currency(book.price) }}]</i></span>
+                </p>
+            </div>
+            <div class="addCart">
+                <AddSubtractButton :quantity="quantity" @updateQuantity="handleUpdate"/>
+                <button class="addCartButton" @click="addCart(book)">加入购物车</button>
+            </div>
+        </div>
+        <BookTabComponent :content="book.detail"/>
+    </div>
+</template>
+
+<script>
+import AddSubtractButton from '@/components/AddSubtractButton'
+import BookTabComponent from '@/components/BooktabComponent'
+import { mapActions } from 'vuex'
+
+export default {
+    name: 'Book',
+    data() {
+        return {
+            book:  {},
+            quantity: 0,
+        }
+    },
+    components: {
+        AddSubtractButton,
+        BookTabComponent,
+    },
+    created() {
+        this.axios.get(this.$route.fullPath)
+            .then(response => {
+                if(response.status === 200) {
+                    this.book = response.data;
+                }
+            }).catch(error => alert(error));
+    },
+    methods: {
+        //子组件AddSubtractButton的自定义事件updateQuantity的处理函数
+        handleUpdate(value) {
+            this.quantity = value;
+        },
+        addCart(book) {
+            let quantity = this.quantity;
+
+            if(quantity === 0) {
+                quantity = 1;
+            }
+
+            let newItem = { ...book, price:this.factPrice(book.price, book.discount)};
+            this.addProductToCart({ ...newItem, quantity });
+            this.$router.push('/cart');
+        },
+        ...mapActions('cart', [
+            //将this.addProductToCart映射为this.$store.dispatch('cart/addProductToCart')
+            'addProductToCart'
+        ]),
+        //格式化折扣数据
+        formatDiscount(value) {
+            if(value) {
+                let strDigits = value.toString().substring(2);
+                strDigits += "折";
+                return strDigits;
+            }
+            else
+                return value;
+        }
+    }
+}
+</script>
+```
+说明：
+
+1.我们接收到的折扣数据格式形如0.95，在显示时，直接显示0.95折，显然不合适，为此我们编写了一个方法，将0.95这种形式化为95折。
+
+2.前面提到过BookIntroduction组件有一个content prop，用于接收图书的详细介绍数据，这里得到图书数据后，将图书的介绍数据通过BookTabComponent组件向下传递。
+
+Book组件在created生命周期钩子中请求服务器端的图书数据。数据接口如下：<br>
+http://111.229.37.167/api/book/:id。<br>
+返回的数据格式入下：
+```
+{
+    "id": 1,
+    "title": "VC++教程",
+    "author": "李四",
+    "price": 168.0,
+    "discount": 0.95,
+    "imgUrl": "/api/img/vc++.jpg",
+    "bigImgUrl": "/api/img/vc++big.jpg",
+    "publishDate": "2019-06-01",
+    "brief": "...",
+    "inventory": 1000,
+    "detail": "...",
+    "newness": true,
+    "hot": true,
+    "specialOffer": false,
+    "slogan": "...",
+    "category": {
+        ...
+    }
+}
+```
 ## 17.8 购物车
 
+在一个电商网站中，购物车很多页面都需要用到，因此非常适合放在Vuex的store中进行集中管理。在本项目中，我们采用模块化的方式管理应用中不同的状态。
+
 ### 17.8.1 购物车状态管理配置
+
+在项目中的store目录下新建modules目录，在该目录下新建cart.js。代码如例17-24所说。
+
+例17-24 cart.js
+```
+const state = {
+    items: []
+}
+//mutations
+const mutations = {
+    //添加商品到购物车中
+    pushProductToCart(state, { id, imgUrl, title, price, quantity}) {
+        if( ! quantity )
+            quantity = 1;
+        state.items.push({ id, imgUrl, title, price, quantity });
+    },
+
+    //增加商品数量
+    icrementItemQuantity(state, { id, quantity }) {
+        let cartItem = state.items.find(item => item.id == id);
+        cartItem.quantity += quantity;
+    },
+
+    //用于清空购物车
+    setCartItems(state, { item }) {
+        state.items = items
+    },
+
+    //删除购物车中的商品
+    deleteCartItem(state, id) {
+        let index = state.items.findIndex(item => item.id === id);
+        if(index > -1)
+            state.items.splice(index, 1);
+    }
+}
+
+//getters
+const getters = {
+    //计算购物车所有商品的总价
+    cartTotalPrice: (state) => {
+        return state.items.reduce(( total, product ) => {
+            return total + product.price * product.quantity
+        }, 0)
+    },
+    //计算购物车中单项商品的价格
+    cartItemPrice: (state) => (id) => {
+        if(state.items.length > 0) {
+            const cartItem = state.items.find(item => item.d === id);
+            if(cartItem) {
+                return cartItem.price * cartItem.quantity;
+            }
+        }
+    },
+    //获取购物车中商品的数量
+    itemsCount: (state) => {
+        return state.items.length;
+    }
+}
+
+//actions
+const actions = {
+    //增加任意数量的商品购物车
+    addProductToCart({ state, commit }, { id, imgUrl, title, price, inventory, quantity }) {
+        if(inventory > 0) {
+            const cartItem = state.items.find(item => item.id == id);
+            if(!cartItem) {
+                commit('pushProductToCart', { id, imgUrl, title, price, quantity })
+            } else {
+                commit('incrementItemQuantity', { id, quantity })
+            }
+        }
+    }
+}
+
+export default {
+    namespaced: true,
+    state,
+    mutations,
+    getters,
+    actions,
+}
+```
+items数组用于保存购物车中所有商品信息的状态属性。
+
+接下来，编辑store目录下的index.js文件，导入cart模块。代码如例17-25所示。
+
+例17-25 store/index.js
+```
+import { createStore } from 'vuex'
+import cart from './modules/cart'
+import createPersistedState from 'vuex-persistedstate'
+
+Vue.use(Vuex)
+
+export default new Vuex.Store({
+    modules: {
+        cart
+    },
+    plugins: [ createPersistedState() ]
+})
+```
+在刷新浏览器窗口时
 
 ### 17.8.2 购物车组件
 
@@ -215,7 +444,7 @@ data() {
             getBooks(url, pageNum, pageSize) {
                 this.message = '';
                 //get 请求增加两个参数pageNum和pageSize
-                this.axios.get(url, {params: { pageNum, pageSize }})
+                this.axios.get(url, {params: { pageNum, pageSize } })
                     .then(response => {
                         if(response.data.code == 200) {
                             this.loading = false;

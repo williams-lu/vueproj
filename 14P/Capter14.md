@@ -67,8 +67,8 @@ const router = VueRouter.createRouter({
     history: VueRouter.createWebHashHistory(),
     routes //简写，相当于 routes: routes
 })
-
-（6）调用应用程序实例的use()方法，传入第（5）步创建的router对象，从而让整个应用程序具备路由功能。
+```
+(6)调用应用程序实例的use()方法，传入第（5）步创建的router对象，从而让整个应用程序具备路由功能。
 ```
 const app = Vue.createApp({})
 //使用路由器实例，从而让整个应用都有路由功能
@@ -76,7 +76,9 @@ app.use(router)
 app.mount('#app')
 ```
 至此，整个前端路由的配置就完成了。
-完整代码如下：
+完整代码如例14-1所示：
+
+例14-1 routes.html
 ```
 <!DOCTYPE html>
 <html lang="en">
@@ -145,9 +147,9 @@ app.mount('#app')
 ```
 npm install vue-router@next --save
 ```
-(2)在App.vue中设置导航链接和组件渲染的位置。修改其模板内容，并将引用HelloWorld组件的地方删除。修改后的代码如下所示。
+(2)在App.vue中设置导航链接和组件渲染的位置。修改其模板内容，并将引用HelloWorld组件的地方删除。修改后的代码如例14-2所示。
 
-App.vue
+例14-2 App.vue
 ```
 <template>
     <p>
@@ -168,9 +170,9 @@ export default {
 </script>
 ...
 ```
-(3)定义路由组件。在components目录下新建Home.vue、News.vue、Books.vue和Videos.vue四个文件。代码如下：
+(3)定义路由组件。在components目录下新建Home.vue、News.vue、Books.vue和Videos.vue四个文件。代码如例14-3所示：
 
-Home、News、Books和Videos组件的代码
+例14-3 Home、News、Books和Videos组件的代码
 
 <center>Home.vue</center>
 
@@ -220,7 +222,9 @@ export default {
 }
 </script>
 ```
-(4)单独定义一个模块文件，配置路由信息，这也是项目中经常使用的方式。在src目录下新建一个router目录，在该目录下新建一个index.js文件。编辑该文件，代码如下：
+(4)单独定义一个模块文件，配置路由信息，这也是项目中经常使用的方式。在src目录下新建一个router目录，在该目录下新建一个index.js文件。编辑该文件，代码如例14-4所示：
+
+例14-4 index.js
 ```
 //导入createRouter和createWebHashHistory
 import { createRouter, createWebHashHistory } from 'vue-router'
@@ -251,7 +255,9 @@ const router = createRouter({
     ]
 })
 ```
-(5)在程序入口main.js文件中，使用router实例让整个应用都有路由功能。代码如下：
+(5)在程序入口main.js文件中，使用router实例让整个应用都有路由功能。代码如例14-5所示：
+
+例14-5 main.js
 ```
 import { createApp } from 'vue'
 import App from './App.vue'
@@ -267,9 +273,9 @@ createApp(App).use(router).mount('#app')
 
 实际项目开发时，经常需要把匹配某种模式的路由映射到同一个组件。例如有一个Book组件，对于所有ID各不相同的图书，都使用这个组件来渲染，这可以使用路径中的动态段(dynamicsetment)来实现，称为参数(param)。参数使用冒号(:)表示，如/book/:id,即/book/1、/book/2和/book/foo都映射到相同的路由。当匹配一个路由时，参数的值将被保存到this.$route.params(this.$route代表当前路由对象)中，可以在组件内使用。
 
-继续14.1.2小节项目，修改App.vue,使用\<router-link\>组件添加两个导航链接。代码如下：
+继续14.1.2小节项目，修改App.vue,使用\<router-link\>组件添加两个导航链接。代码如例14-6所示。
 
-App.vue
+例14-6 App.vue
 ```
 <template>
     <p>
@@ -281,7 +287,9 @@ App.vue
 </template>
 ...
 ```
-在components目录下新建Book.vue文件。代码如下：
+在components目录下新建Book.vue文件。代码如例14-7所示。
+
+例14-7 Book.vue
 ```
 <template>
     <div>图书ID：{{ $route.params.id }}</div>
@@ -292,7 +300,9 @@ export default {
 }
 </script>
 ```
-接下来编辑router目录下的index.js文件，导入Book组件，并添加动态路径/book/:id的路由配置。代码如下：
+接下来编辑router目录下的index.js文件，导入Book组件，并添加动态路径/book/:id的路由配置。代码如例14-8所示。
+
+例14-8 index.js
 ```
 ...
 import Book from '@/components/Book'
@@ -323,7 +333,9 @@ const router = createRouter({
 
 ### 14.2.1 查询参数
 
-URL中带有参数的形式为/book?id=1,这在传统的Web应用程序中很常见，根据查询参数向服务端请求数据。在单页应用程序开发中，也支持路径中的查询参数。修改App.vue,代码如下：
+URL中带有参数的形式为/book?id=1,这在传统的Web应用程序中很常见，根据查询参数向服务端请求数据。在单页应用程序开发中，也支持路径中的查询参数。修改例14-6，代码如例14-9所示。
+
+例14-9 App.vue
 ```
 <template>
     <p>
@@ -335,14 +347,18 @@ URL中带有参数的形式为/book?id=1,这在传统的Web应用程序中很常
 </template>
 ...
 ```
-修改Book.vue,代码如下：
+修改例14-7，代码如例14-10所示。
+
+例14-10 Book.vue
 ```
 <template>
     <div>图书ID：{{ $route.query.id }}</div>
 </template>
 ...
 ```
-修改index.js，代码如下：
+修改例14-8，代码如例14-11所示。
+
+例14-11 index.js
 ```
 ...
 const router = createRouter({
@@ -434,9 +450,9 @@ const routes = [
 
 继续14.2小节的例子(将例子恢复为动态段)，当单击“图书”链接时，以列表形式显示所有图书的书名，进一步单击单个书名链接，在Books视图中显示图书的详细信息。这可以通过嵌套路由来实现。
 
-在assets目录下新建一个books.js文件，里面是图书数据。代码如下：
+在assets目录下新建一个books.js文件，里面是图书数据。代码如例14-12所示。
 
-book.js
+例14-12 book.js
 ```
 export default [
     { id: 1, title: 'vue教程', desc: '学Vue' },
@@ -446,7 +462,9 @@ export default [
 ```
 这里硬编码了图书数据，只是为了演示需要，真实场景中，图书数据应该是通过Ajax请求从服务器端加载得到。
 
-修改Books.vue，以列表方式显示图书馆，添加导航链接，并使用\<router-view\>指定Book组件渲染的位置。代码如下：
+修改Books.vue，以列表方式显示图书馆，添加导航链接，并使用\<router-view\>指定Book组件渲染的位置。代码如例14-13所示。
+
+例14-13 Books.vue
 ```
 <template>
     <div>
@@ -476,9 +494,9 @@ export default {
 
 记得删除App.vue中图书1和图书2的\<router-link\>的配置。
 
-修改router目录下的index.js文件，增加嵌套路由的配置并删除index.js的部分配置。代码如下
+修改router目录下的index.js文件，增加嵌套路由的配置并删除例14-11 index.js的部分配置。代码如例14-14所示。
 
-index.js
+例14-14 index.js
 ```
 ...
 import Book from '@/components/Book'
@@ -507,9 +525,9 @@ const router = createRouter({
 
 要对同一组件中的路由参数更改做出响应，只需监听$route.parems即可。
 
-修改Book.vue，当路由参数变化时，更新图书详细数据。代码如下：
+修改Book.vue，当路由参数变化时，更新图书详细数据。代码如例14-15所示。
 
-例14.15Book.vue
+例14.15 Book.vue
 ```
 <template>
     <div>
