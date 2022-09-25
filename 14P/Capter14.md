@@ -1733,3 +1733,193 @@ const UserDetails = () =>
         /* 组件定义 */
     })
 ```
+通常，对所有路由始终使用动态导入是一个很好的抉择。
+
+需要注意的是，不要对路由使用异步组件。异步组件仍然可以在路由组件内部使用，但是路由组件本身只是动态导入。
+
+当使用像Webpack这样的打包器时，可以自动受益于其代码拆分功能，在代码中所有被import()的组件，都将打包成一个单独的JS文件，在路由匹配到该组件时，就会自动请求这个资源，实现异步加载。
+
+如果希望将嵌套在某个路由下的所有组件都打包到同一个异步块(chunk)中，那么只需要使用特殊的注释语法提供一个块名来使用命名块(需要webpack >2.4)。代码如下所示：
+```
+{
+    path: '/news',
+    name: 'news',
+    component: () => import(/* webpackChunkName: "home" */ '@/components/News'),
+    meta: {
+        title: '新闻'
+    }
+},
+{
+    path: '/books',
+    name: 'books',
+    component: () => import(/* webpackChunkName: "home" */ '@/components/Books'),
+    meta: {
+        title: '图书列表'
+    }
+},
+{
+    path: '/videos',
+    name: 'videos',
+    component: () => import(/* webpackChunkName: "home" */ '@/components/Videos'),
+    meta: {
+        title: '视频'
+    }
+},
+```
+在构建发布版本时，就会将News、Books和Videos组件打包到同一个名字中包含home的JS文件中。
+
+## 14.15 等待导航结果
+
+当使用\<router-link\>时，Vue Router调用router.push()函数触发导航，虽然大多数链接的预期行为是将用户导航到新页面，但也有一些情况，用户将保持在同一页面：
++ 用户已经在他们试图导航到的页面上;
++ 导航守卫通过返回false终止导航;
++ 一个新的导航守卫在前一个还未完成时发生;
++ 导航守卫通过返回一个新的位置（例如，返回'/login'）来重定向到其他地方;
++ 导航守卫抛出错误。
+
+如果我们想在导航完成后做些事情，那么需要有一种方式可以在调用router.push()函数后进行等待。假设有一个导航菜单，经由它可以跳转到不同的页面，但我们想在导航到新页面后隐藏这个菜单，于是编写如下代码：
+```
+router.push('/my-profile')
+this.inMenuOpen = false
+```
+但这将立即关闭菜单，因为导航是异步的，需要等待router.push()返回的Promise。代码如下所示：
+```
+await router.push('/my-profile')
+this.isMenuOpen = false
+```
+现在，菜单将在导航完成后关闭，但如果导航被阻止，它也将关闭，我们需要一种方法检测是否真的改变了页面。
+
+如果导航被阻止，导致用户停留在同一页面上，则router.push()返回的Promise的已解析(resolve)值将是一个导航失败(navigation failure)，否则，它将是一个计算为false的值(通常是undifined)，这样我们就能区分导航是否成功、页面是否被改变。代码如下所示：
+```
+const navigationResult = await router.push('/my-profile')
+
+if(navigationResult) {
+    //如果用户没有保存就离开了文章的编辑页
+    if(isNavigationFailure(failure, NavigationFailureType.aborted)) {
+        //向用户显示一个通知
+        showToast('You have unsaved changes, discard and leave anyway?')
+    }
+}
+```
+NavigationFailureType是枚举类型，共有3个枚举值，它们的含义如下。
++ aborted: 中止的导航是由于导航守卫返回false或调用next(false)函数而失败的导航;
++ cancelled: 在当前导航完成之前发生了新的导航。例如，在一个导航守卫内部等待时调用了router.push()函数。
++ duplicated: 导航被阻止，因为我们已经在目标位置。
+
+如果省略第2个参数，即调用isNavigationFailure(failure)函数，那么该函数只检查失败是否是导航失败。
+
+所有导航失败都暴露在to和from属性中，以反映失败导航的当前位置和目标位置。代码如下所示：
+```
+//试图访问admin页面
+router.push('/admin').catch(failure => {
+    if(isNavigationFailure(failure, NavigationFailureType.aborted)) {
+        failure.to.path   // '/admin'
+        failure.from.path  // '/'
+    }
+})
+```
+当在导航守卫内部返回一个新位置时，将触发一个新的导航，该导航将覆盖正在进行的导航。与其他返回值不同，重定向不会阻止导航，而是创建一个新的导航。可以通过读取路由位置对象的redirectedFrom属性进行检测。代码如下所示：
+```
+await router.push('/my-profile')
+if(router.currentRoute.value.redirectedFrom) {
+    // redirectedFrom在导航守卫中被解析为路由位置对象，如同to和from
+}
+```
+
+## 14.16 动态路由
+
+向路由器添加路由通常是通过routes选项完成的，但是在某些情况下，我们可能希望在应用程序已经运行时添加或删除路由，也就是以编程的方式添加或删除路由。
+
+### 14.16.1 添加路由
+
+动态路由主要通过两个方法来实现：router.addRoute()和router.removeRoute()。router.addRoute()方法只是注册一个新的路由，如果新注册的路由与当前位置匹配，则需要使用router.push()函数或router.replace()函数手动导航以显示新路由。
+
+在下面的代码中，只定义了一个单一的路由：
+```
+const router = createRouter({
+    history: createWebHistory(),
+    routes: [{ path: '/:articleName', component: Article }],
+})
+```
+转到任何页面，如/about、/store，都将渲染Article组件。如果在/about上想显示一个新路由，那么仅编写下面的代码是不够的。
+```
+router.addRoute({ path: '/about', component: About })
+```
+路由到/about页面，仍将显示Article组件。要显示About组件，我们需要手动调用router.replace()函数改变当前位置并覆盖之前的位置。代码如下所示：
+```
+router.addRoute({ path: '/about', component: About })
+//也可以使用this.$route或route = useRoute()（在setup()函数中）
+route.replace(route.currentRoute.value.fullPath)
+```
+
+### 14.16.2 在导航守卫中添加路由
+
+在导航守卫中添加或删除路由，不要调用router.replace()函数，而是通过返回新的位置来触发重定向。代码如下所示：
+```
+router.beforeEach(to => {
+    if(!hasNecessaryRoute(to)) {
+        //触发重定向
+        return to.fullPath
+    }
+})
+```
+上面的实例假设两件事：首先，新添加的路由记录将匹配到目标位置，这实际上导致了与我们尝试访问的位置不同；其次，hasNecessaryRoute()函数在添加新路由后返回false，以避免无限重定向。
+
+因为我们进行了重定向，所以替换了正在进行的导航，其行为与前面的实例类似。在实际场景中，添加更有可能发生在导航守卫之外。例如，当一个视图组件挂载时，它会注册新的路由。
+
+### 14.16.3 删除Books组件的嵌套路由配置
+
+有几种不同的方式可以删除现有路由。
+
+(1)通过添加名称冲突的路由。如果添加了一个与现有路由同名的路由，那么会先删除该路由，然后再添加路由。代码如下所示：
+```
+router.addRoute({ path: '/about', name: 'about', component: About})
+//这将删除先前添加的路由，因为它们具有相同的名称且是唯一的
+router.addRoute({ path: '/other', name: 'about', component: Other })
+```
+(2)通过调用router.addRoute()函数返回的回调。代码如下所示：
+```
+const removeRoute = router.addRoute(routeRecord)
+removeRoute() //如果路由存在，则删除它
+```
+这在路由没有名称时非常有用。
+(3)通过调用router.removeRoute()函数按名称删除一个路由。代码如下所示：
+```
+router.addRoute({ path: '/about', name: 'about', component: About })
+//删除路由
+router.removeRoute('about')
+```
+>注意：如果希望使用removeRoute()函数，但又希望避免名称冲突，可以在路由中使用Symbol作为名称。
+
+当一个路由被删除时，它的所有别名和子路由都会被删除。
+
+### 14.16.4 添加嵌套路由
+
+要向现有路由添加嵌套路由，可以将路由的名称作为第一个参数传递给router.addRoute()函数，这将有效地添加路由，就像通过children添加一样。代码如下所示：
+```
+router.addRoute({ name: 'admin', path: '/admin', component: Admin })
+router.addRoute('admin', { path: 'settings', component: AdminSettings })
+```
+相当于：
+```
+router.addRoute({
+    name: 'admin',
+    path: '/admin',
+    component: Admin,
+    children: [{ path: 'settings', component: AdminSettings }],
+})
+```
+
+### 14.16.5 查看现有路由
+
+Vue Router给出了两个查看现有路由的函数。
++ router.hasRoute(): 检查路由是否存在。
++ router.getRoute(): 获取包含所有路由记录的数组。
+
+## 14.17 小结
+
+本章详细介绍了Vue官方的路由管理器Vue Router的使用。涵盖动态参数、嵌套路由、命名视图、声明式导航和编程式导航，在使用HTML5 history模式的时候，在生产环境下会引起404错误，需要我们针对不同的Web服务器做相应的配置来解决这个问题。
+
+之后详细介绍了Vue Router中的导航守卫，并给出了具体的应用案例。
+
+本章还介绍了Vue Router的其他相关知识，包括数据获取、Vue Router提供的组合API函数、滚动行为、延迟加载路由、等待导航结果、动态路由等内容。
