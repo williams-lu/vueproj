@@ -308,17 +308,404 @@ export default new Vuex.Store({
     plugins: [ createPersistedState() ]
 })
 ```
-在刷新浏览器窗口时
+在刷新浏览器窗口时,store中存储的状态信息会被重置，这样就会导致加入购物车中的商品信息丢失。所以一般会选择一种浏览器端持久存储方案解决这个问题，比较常用且简单的方案就是localStorage，保存在store中的状态信息也要同步加入localStorage，在刷新浏览器窗口前，或者用户重新访问网站时，从localStorage中读取状态信息保存到store中。在整个应用期间，需要考虑各种情况下store与localStorage数据同步的问题，这比较麻烦。为此，我们可以使用一个第三方的插件解决store与localStorage数据同步的问题，即例17-25中所用的vuex-persistedstate插件。
+
+首先安装vuex-persistedstate插件，在vscode的终端窗口中执行以下命令进行安装。
+```
+npm install vuex-persistedstate -S
+```
+vue-persistedstate插件的使用非常简单，从例17-25中可以看到，只需要两句代码就可以实现store的持久化存储，这会将整个store的状态以vuex为键名存储到localStorage中。
+
+如果只想持久化存储store中的部分状态信息，那么可以在调用createPersistedState()方法时传递一个选项对象，在该选项对象的reducer()函数中返回要存储的数据。例如：
+```
+plugin: [createPersistedState({
+    reduce(data) {
+        return {
+            //设置只存储cart模块中的状态
+            cart: data.cart,
+            //或者设置只存储cart模块中的items数据
+            //products: data.cart.items
+        }
+    }
+})]
+```
+reducer()函数的data参数是完整的state对象。
+
+如果想改变底层使用的存储机制，如使用sessionStorage,那么可以在选项对象中通过storage指定。代码如下所示：
+```
+plugins: [createPersistedState({
+    storage: window.sessionStorage,
+    ...
+})]
+```
+vuex-persistedstate更多的用法请参看下面的网址：<br>
+https://github.com/robinvdvleuten/vuex-persistedstate。<br>
+配置好Vuex的状态管理后，就可以开始编写购物车组件了。
 
 ### 17.8.2 购物车组件
 
+在views目录下新建ShoppingCart.vue,代码如例17-26所示。
+
+例17-26 ShoppingCart.vue
+```
+<template>
+    <div class="shoppingCart">
+        <table>
+            <tr>
+                <th></th>
+                <th>商品名称</th>
+                <th>单价</th>
+                <th>数量</th>
+                <th>金额</th>
+                <th>操作</th>
+            </tr>
+            <tr v-for="book in books" :key="book.id">
+                <td><img :src="book.imgUrl"></td>
+                <td>
+                    <router-link :to="{name:'book', params:{id: book.id}}" target="_blank">
+                        {{ book.title }}
+                    </router-link>
+                </td>
+                <td>{{ currency(book.price) }}</td>
+                <td>
+                    <button @click="handleSubtract(book)">-</button>
+                        {{ book.quantity }}
+                    <button @click="handleAdd(book.id)">+</button>
+                </td>
+                <td>{{ currency(cartItemPrice(book.id)) }}</td>
+                <td>
+                    <button @click="deleteCartItem(book.id)">删除</button>
+                </td>
+            </tr>
+        </table>
+        <p>
+            <span><button class="checkout" @click="checkout">结算</button></span>
+            <span>总价: {{ currency(cartItemPrice) }}</span>
+        </p>
+    </div>
+</template>
+
+<script>
+import { mapGetters, mapState, mapMutations } from 'vuex'
+
+export default {
+    name: "ShoppingCart",
+    inject: ['currency'],
+    computed: {
+        ...mapState('cart', {
+            books: 'items'
+        }),
+        ...mapGetters('cart', [
+            'cartItemPrice',
+            'cartTotalPrice',
+        ])
+    },
+
+    methods: {
+        itemPrice(price, count) {
+            return price * count;
+        },
+        ...mapMutations('cart', [
+            'deleteCartItem',
+            'incrementItemQuantity',
+            'setCartItems'
+        ]),
+        handleAdd(id) {
+            this.incrementItemQuantity({ id: id, quantity: 1 });
+        },
+
+        handleSubtract(book) {
+            let quantity = book.quantity -1;
+            
+            if(quantity <= 0) {
+                this.deleteCartItem(book.id);
+            }
+            else
+                this.incrementItemQuantity({ id: book.id, quantity: -1 });
+        },
+        checkout() {
+            this.$router.push("/check");
+        }
+    }
+};
+</script>
+```
+ShoppingCart组件提供了两种方式删除购物车中的某项商品：(1)单击“删除”按钮，将直接删除购物车中的该项商品；(2)用户单击数量下的减号按钮时，如果判断数量减1后为0，则删除该项商品项。
+
 ## 17.9 结算页面
+
+在购物车页面中单击“结算”按钮，则进入结算页面，结算页面再一次列出购物车中的所有商品，不同的是，在结算页面不能再对商品进行修改。
+
+在views目录下新建Checkout.vue，代码如例17-27所示。
+
+例17-27 Checkout.vue
+```
+<template>
+    <div class="shoppingCart">
+        <h1 v-if="success">{{ msg }}</h1>
+        <table>
+            <caption>商品结算</caption>
+            <tr>
+                <th></th>
+                <th>商品名称</th>
+                <th>单价</th>
+                <th>数量</th>
+                <th>金额</th>
+            </tr>
+            <tr v-for="book in books" :key="book.id">
+                <td><img :src="book.imgUrl"></td>
+                <td>
+                    <router-link :to="{name:'book', params:{id: book.id}}" target="_blank">
+                        {{ book.title }}
+                    </router-link>
+                </td>
+                <td>{{ currency(book.price) }}</td>
+                <td>
+                    {{ book.quantity }}
+                </td>
+                <td>{{ currency(cartItemPrice(book.id)) }}</td>
+            </tr>
+        </table>
+        <p>
+            <span><button class="pay" @click="pay">付款</button></span>
+            <span>总价: {{ currency(cartTotalPrice) }}</span>
+        </p>
+    </div>
+</template>
+
+<script>
+import { mapGetters, mapState, mapMutations } from 'vuex'
+
+export default {
+    name: "Checkout",
+    data() {
+        return {
+            success: false,
+            msg: '付款成功！'
+        };
+    },
+    computed: {
+        ...mapState('cart', {
+            books: 'items'
+        }),
+        ...mapGetters('cart', [
+            'cartItemPrice',
+            'cartTotalPrice',
+        ])
+    },
+    methods: {
+        itemPrice(price, count) {
+            return price * count;
+        },
+        ...mapMutations('cart', [
+            'setCartItems'
+        ]),
+        pay() {
+            this.setCartItems({ items: [] });
+            this.success = true;
+        }
+    }
+};
+</script>
+```
+在线支付涉及各个支付平台或银联的调用接口，所以本项目的购物流程到这一步就结束了，当用户单击“付款”按钮时，只是简单地清空购物车，稍后提示用户“付款成功”。
 
 ## 17.10 用户管理
 
+在实际场景中，当用户提交购物订单准备结算时，系统会判断用户是否已经登录，如果没有登录，会提示用户先进行登录，本节实现用户注册和用户登录组件。
+
 ### 17.10.1 用户状态管理配置
 
+用户登录后的状态需要保存，不仅可以用于向用户显示欢迎信息，还可以用于对受保护的资源进行权限验证。同样，用户的状态存储也是用Vuex管理。
+
+在store/modules目录下新建user.js，代码例17-28所示。
+
+例17-28 user.js
+```
+const state = {
+    user: null
+}
+//mutations
+const mutations = {
+    saveUser(state, {username, id}) {
+        state.user = { username, id}
+    },
+    deleteUser(state) {
+        state.user = null;
+    }
+}
+
+export default {
+    namespaced: true,
+    state,
+    mutations,
+}
+```
+对于前端，存储用户名和用户ID已经足矣，像用户中心等功能的实现，是需要重新向服务器端去请求数据的。
+
+编辑store/index.js文件，导入user模块，并在modules选项下进行注册。代码如例17-29所示。
+
+例17-29 store/index.js
+
+```
+import { createStore } from 'vuex'
+
+import cart from './modules/cart'
+import user from './modules/user'
+import createPersistedState from "vues-persistedstate"
+
+export default createStore({
+    modules: {
+        cart,
+        user,
+    },
+    plugins: [createPersistedState()]
+})
+```
+
 ### 17.10.2 用户注册组件
+
+当用于单击Header组件中的“注册”链接时，将跳转到用户注册页面。
+
+在components目录下新建UserRegister.vue，代码如例17-30所示。
+
+例17-30 UserRegister.vue
+```
+<template>
+    <div class="register">
+        <form>
+            <div class="lable">
+                <lable class="error">{{ message }}</lable>
+                <input name="username" type="text"
+                    v-model.trim="username"
+                    placeholder="请输入用户名" />
+                <input type="password"
+                    v-model.trim="password"
+                    placeholder="请输入密码" />
+                <input type="password"
+                    v-model.trim="password2"
+                    placeholder="请输入确认密码" />
+                <input type="tel"
+                    v-model.trim="mobile"
+                    placeholder="请输入手机号" />
+            </div>
+            <div class="submit">
+                <input type="submit" @click.prevent="register" value="注册" />
+            </div>
+        </form>
+    </div>
+</template>
+
+<script>
+import { mapMutations } from 'vuex';
+
+export default {
+    name: "UserRegister",
+    data() {
+        return {
+            username: "",
+            password: "",
+            password2: "",
+            mobile: "",
+            message: '',
+        };
+    },
+    watch: {             //①
+        username(newVal) {
+            //取消上一次请求
+            if(newVal) {
+                this.cancelRequest();          //①
+                this.axios
+                    .get("/user/" + newVal, {
+                        cancelToken: new this.axios.CancelToken(         //①
+                            cancel => this.cancel = cancel
+                        )
+                    })
+                    .then(response => {
+                        if(response.data.code == 200) {
+                            let isExist = response.data.data;
+                            if(isExist) {
+                                this.message = "该用户已经存在";
+                            } 
+                            else {
+                                this.message = "";
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        if(this.axios.isCancel(error)) {             //①
+                            //如果是请求被取消产生的错误，则输出取消请求的原因
+                            console.log("请求取消: ", error.message);
+                        }
+                        else {
+                            //错误处理
+                            console.log("请求取消")
+                        }
+                    });
+            }
+        }
+    },
+    methods: {
+        register() {
+            this.message = '';
+            if(!this.checkForm())
+                return;
+            this.axios.pos("/user/register",
+                {username:this.username, password: this.password, mobile: this.mobile})
+                .then(response => {
+                    if(response.data.code === 200) {
+                        this.saveUser(response.data.data);
+                        this.username = '';
+                        this.password = '';
+                        this.password2 = '';
+                        this.mobile = '';
+                        this.$router.push("/");
+                    }else if(response.data.code === 500) {
+                        this.message = "用户注册失败";
+                    }
+                })
+                .catch(error => {
+                    alert(error.message)
+                })
+        },
+        cancelRequest() {            //①
+            if(typeof this.cancel === "function") {
+                this.cancel("终止请求");
+            }
+        },
+        checkForm() {
+            if(!this.username || !this.password || !this.password2 || !this.mobile) {
+                this.$msgBox.show({title:"所有字段不能为空"});
+                return false;
+            }
+            if(this.password !== this.password2) {
+                this.$msgBox.show({ title: "密码和确认密码必须相同"});
+                return false;
+            }
+            return true;
+        },
+        ...mapMutations('user', [
+            'saveUser'
+        ])
+    },
+};
+</script>
+```
+说明：<br>
+①处在这里实现了一个功能，当用户输入用户名时，实时去服务器端检测该用户名是否已经存在，如果存在，则提示用户，这是通过Vue的监听器来实现的。不过由于v-model指令内部实现机制的原因（对于输入文本框，默认绑定的是input事件），如果用户快捷输入或快速用退格删除用户名时，监听器将触发多次，由于导致频繁地想服务器端发起请求。为了解决这个问题，可以利用axios的cancel token取消重复的请求。使用axios发起请求时，可以传递一个配置对象，在配置对象中使用cancelToken选项，通过传递一个executor()函数到CancelToken的构造函数中来创建cancel token。
+```
+this.axios.get("/user/" + newVal, {
+    cancelToken: new this.axios.CancelToken(function executor(c) {
+        //executor()函数接收一个cancel()函数作为参数
+        this.cancel = c;
+    })
+})
+```
+使用箭头函数可以简化上述代码，如下所示。
+```
+
+
+```
 
 ### 17.10.3 用户登陆组件
 

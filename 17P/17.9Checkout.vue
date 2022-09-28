@@ -1,9 +1,3 @@
-
-import { currency } from './17.3.5util';
-
-import { currency } from './17.3.5util';
-
-import { currency } from './17.3.5util';
 <!-- 17.9结算页面Checkout.vue -->
 
 <template>
