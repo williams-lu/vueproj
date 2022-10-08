@@ -703,13 +703,410 @@ this.axios.get("/user/" + newVal, {
 ```
 使用箭头函数可以简化上述代码，如下所示。
 ```
+<template>
+    <div class="register">
+        <form>
+            <div class="lable">
+                <lable class="error">{{ message }}</lable>
+                <input name="username" type="text"
+                    v-model.trim="username"
+                    placeholder="请输入用户名" />
+                <input type="password"
+                    v-model.trim="password"
+                    placeholder="请输入密码" />
+                <input type="password"
+                    v-model.trim="password2"
+                    placeholder="请输入确认密码" />
+                <input type="tel"
+                    v-model.trim="mobile"
+                    placeholder="请输入手机号" />
+            </div>
+            <div class="submit">
+                <input type="submit" @click.prevent="register" value="注册" />
+            </div>
+        </form>
+    </div>
+</template>
 
+<script>
+import { mapMutations } from 'vuex';
 
+export default {
+    name: "UserRegister",
+    data() {
+        return {
+            username: "",
+            password: "",
+            password2: "",
+            mobile: "",
+            message: '',
+        };
+    },
+    watch: {
+        username(newVal) {       //①
+            //取消上一次请求
+            if(newVal) {
+                this.cancelRequest();        //①
+                this.axios
+                    .get("/user/" + newVal, {
+                        cancelToken: new this.axios.CancelToken(        //①
+                            cancel => this.cancel = cancel
+                        )
+                    })
+                    .then(response => {
+                        if(response.data.code == 200) {
+                            let isExist = response.data.data;
+                            if(isExist) {
+                                this.message = "该用户已经存在";
+                            } 
+                            else {
+                                this.message = "";
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        if(this.axios.isCancel(error)) {         //①
+                            //如果是请求被取消产生的错误，则输出取消请求的原因
+                            console.log("请求取消: ", error.message);
+                        }
+                        else {
+                            //错误处理
+                            console.log("请求取消")
+                        }
+                    });
+            }
+        }
+    },
+    methods: {
+        register() {
+            this.message = '';
+            if(!this.checkForm())
+                return;
+            this.axios.pos("/user/register",
+                {username:this.username, password: this.password, mobile: this.mobile})
+                .then(response => {
+                    if(response.data.code === 200) {
+                        this.saveUser(response.data.data);
+                        this.username = '';
+                        this.password = '';
+                        this.password2 = '';
+                        this.mobile = '';
+                        this.$router.push("/");
+                    }else if(response.data.code === 500) {
+                        this.message = "用户注册失败";
+                    }
+                })
+                .catch(error => {
+                    alert(error.message)
+                })
+        },
+        cancelRequest() {            //①
+            if(typeof this.cancel === "function") {
+                this.cancel("终止请求");
+            }
+        },
+        checkForm() {
+            if(!this.username || !this.password || !this.password2 || !this.mobile) {
+                this.$msgBox.show({title:"所有字段不能为空"});
+                return false;
+            }
+            if(this.password !== this.password2) {
+                this.$msgBox.show({ title: "密码和确认密码必须相同"});
+                return false;
+            }
+            return true;
+        },
+        ...mapMutations('user', [
+            'saveUser'
+        ])
+    },
+};
+</script>
 ```
+说明：代码①处这里实现了一个功能，当用户输入用户名时，实时去服务端检测该用户名是否已经存在，如果存在，则提示用户，这是通过Vue的监听器来实现的。不过由于v-model指令内部实现机制的原因（对于文本输入框，默认绑定的是input事件），如果用户快速输入或快速用退格键删除用户名时，监听器将触发多次，由此导致频繁地想服务器端发起请求。为了解决这个问题，可以利用axios的cancel token取消重复的请求。使用axios发起请求时，可以传递一个配置对象，在配置对象中使用cancelToken选项，通过传递一个executor()函数到CancelToken的构造函数中来创建cancel token。
+```
+this.axios.get("/user/" + newVal, {
+    cancelToken: new this.axios.CancelToken(function executor(c) {
+        //executor()函数接收一个cancel()函数作为参数
+        this.cancel = c;
+    })
+})
+```
+使用箭头函数可以简化上述代码，如下所示。
+```
+this.axios.get("/user/" + newVal, {
+    cancelToken: new this.axios.CancelToken(
+        c => this.cancel = c
+    )
+})
+```
+将cancel()函数保存为组件实例的方法，之后如果取消请求，调用this.cancel()即可。cancel()函数可以接收一个可选的消息字符串参数，用于给出取消请求的原因。同一个cancel token可以取消多个请求。在发生错误时，可以在catch()方法中使用this.axios.isCancel(error)判断该错误是否是由取消请求而引发的。
+
+当然，这里也可以通过修改v-model的监听事件为change解决快速输入和删除导致的重复请求问题，只需要给v-model指令添加.lazy修饰符即可。
+
+用户名是否已注册的判断，请求的服务器数据接口如下：
+http://111.229.37.167/api/user/{用户名}。
+
+返回的数据解构形式如下：
+```
+{
+    "code": 200,
+    "data": true    //如果要注册的用户名不存在，则返回false
+}
+```
+用户注册请求的服务器数据接口如下：<br>
+http://111.229.37.167/api/user/register。
+
+需要采用Post()方法向该接口发起请求，提交的数据是一个JSON格式的对象，该对象要包含username、password和mobile三个字段。
+
+返回的数据解构形式如下：
+```
+{
+    "code": 200,
+    "data": {
+        "id": 18,
+        "username": "小鱼儿",
+        "password": "1234",
+        "mobile": "1333333333",
+    }
+}
+```
+实际开发时，服务端不用把密码返回给前端，如果前端需要用到密码，则可以采用加密形式传输。
+
+例如17-30剩余的代码并不复杂，这里不再详述。UserRegister组件渲染的效果如图17-18所示。
+
+当用户注册成功后，将用户名和ID保存到store中，并跳转到根路径下，即网站的首页。然后Header组件会自动渲染出用户名，显示欢迎信息，如果17-19所示。
 
 ### 17.10.3 用户登陆组件
 
+当用户单击Header组件中的“登录”链接时，将跳转到用户登录页面。
+
+在components目录下新建UserLogin.vue，代码如例17-31所示。
+
+例17-31 UserLogin.vue
+```
+<template>
+    <div class="login">
+        <div class="error">{{ message }}</div>
+        <from>
+            <div class="lable">
+                <input
+                    name="username"
+                    type="text"
+                    v-model.trim="username"
+                    placeholder="请输入用户名"
+                />
+                <input
+                    type="password"
+                    v-model.trim="password"
+                    placeholder="请输入密码"
+                />
+            </div>
+            <div class="submit">
+                <input type="submit" @click.prevent="login" value="登录" />
+            </div>
+        </from>
+    </div>
+</template>
+
+<script>
+import { mapMutations } from 'vuex';
+
+export default {
+    name: "UserLogin",
+    data() {
+        return {
+            username: '',
+            password: '',
+            message: '',
+        };
+    },
+    methods: {
+        login() {
+            this.message = '';
+            if(!this.checkForm())
+                return;
+            this.axios.post("/user/login",
+                {username: this.username, password: this.password})
+                .then(response => {
+                    if(response.data.code === 200) {
+                        this.saveUser(response.data.data);
+                        this.username = '';
+                        this.password = '';
+                        //如果存在查询参数
+                        if(this.$route.query.redirect) {
+                            const redirect = this.$route.query.redirect;
+                            //跳转至进入登录页面的路由
+                            this.$router.replace(redirect);
+                        }else{
+                            //否则跳转至首页
+                            this.$router.replace('/');
+                        }
+                    }else if(response.data.code === 500) {
+                        this.message = "用户登录失败";
+                    }else if(response.data.code === 400) {
+                        this.message = "用户名或密码错误";
+                    }
+                })
+                .catch(error => {
+                    alert(error.message)
+                })
+        },
+        ...mapMutations('user', [
+            'saveUser'
+        ]),
+        checkForm() {
+            if(!this.username || !this.password) {
+                this.$msgBox.show({ title: "用户名和密码不能空"});
+                return false;
+            }
+            return true;
+        }
+    }
+};
+</script>
+```
+用户登录组件并不复杂，值得一提的就是在用户登录后需要跳转到进入登录页面前的路由，这会让用户的体验更好，实现方式已经在14.10.1小姐中介绍过，本项目也是利用beforeEach()注册的全局前置守卫保存用户登录前的路由路径，可以参看17.11小节。
+
+用户登录请求的数据接口如下：<br>
+http://111.229.37.167/api/user/login。
+
+同样是以Post()方法发起请求，提交的数据是一个JSON格式的对象，该对象要包含username和password两个字段。
+
+返回的数据格式与用户注册返回的数据格式相同。
+
+UserLogin组件渲染的效果如图17-20所示。
+
 ## 17.11 路由配置
+
+下面给出本项目的路由配置，其中包含了页面标题的设置，以及对结算页面的路由要求用户已登录的判断。代码如例17-32所示。
+
+例17-32 router/index.js
+```
+import { createRouter, createWebHistory } from 'vue-router'
+import Home from '@/views/Home'
+import store from '@/store'
+
+const routes = [
+    {
+        path: '/',
+        redirect: {
+            name: 'home'
+        }
+    },
+    {
+        path: '/home',
+        name: 'home',
+        meta: {
+            title: '首页'
+        },
+        component: Home
+    },
+    {
+        path: '/newBooks',
+        name: 'newBooks',
+        meta: {
+            title: '新书上市'
+        },
+        component: () => import('../components/BooksNew.vue')
+    },
+    {
+        path: '/category/:id',
+        name: 'category',
+        meta: {
+            title: '图书分类'
+        },
+        component: () => import('../views/Books.vue')
+    },
+    {
+        path: '/search',
+        name: 'search',
+        meta: {
+            title: '搜索结果'
+        },
+        component: () => import('../views/Books.vue')
+    },
+    {
+        path: '/book/:id',
+        name: 'book',
+        meta: {
+            title: '图书'
+        },
+        component: () => import('../views/Books.vue')
+    },
+    {
+        path: '/search',
+        name: 'search',
+        meta: {
+            title: '搜索结果'
+        },
+        component: () => import('../views/Books.vue')
+    },
+    {
+        path: '/cart',
+        name: 'cart',
+        meta: {
+            title: '购物车'
+        },
+        component: () => import('../views/ShoppingCart.vue')
+    },
+    {
+        path: '/register',
+        name: 'register',
+        meta: {
+            title: '注册'
+        },
+        component: () => import('../components/UserRegister.vue')
+    },
+    {
+        path: '/login',
+        name: 'login',
+        meta: {
+            title: '登录'
+        },
+        component: () => import('../components/UserLogin.vue')
+    },
+    {
+        path: '/check',
+        name: 'check',
+        meta: {
+            title: '结算'
+        },
+        component: () => import('../components/Checkout.vue')
+    },
+]
+
+coust router = createRouter({
+    history: createWebHistory(process.env.BASE_URL),
+    routes
+})
+
+router.beforeEach(to => {
+    //判断该路由是否需要登录权限
+    if(to.matched.some(record => record.meta.requiresAuth)) {
+        //路由需要验证，判断用户是否已经登录
+        if(store.state.user.user) {
+            return true;
+        }
+        else {
+            return {
+                path: '/login',
+                query: { redirect: to.fullPath }
+            };
+        }
+    }
+    else
+        return true;
+})
+
+
+//设置页面标题
+router.afterEach((to) => {
+    document.title = to.meta.title;
+})
+
+export default router
+```
 
 ## 17.12 分页组件
 
