@@ -66,12 +66,157 @@
 
 ### 17.7.2 标签页组件
 
+在本项目中的标签页组件是根据10.7小节介绍的动态组件只是编写的，并进行了封装。该标签页组件有3个子组件，分别是图书介绍、图书评价和图书问答。下面分别介绍标签页组件及其子组件。
 
 **1. 标签页组件**
 
+在components目录下新建BookTabComponent.vue,代码如例17-19所示。
+
+例17-19 BookTabComponent.vue
+```
+<template>
+    <div class="tabComponent">
+        <button
+            v-for="tab in tabs"
+            :key="tab.title"
+            :class="['tab-button', { active: currentTab === tab.title }]"
+            @click="currentTab = tab.title">
+            {{ tab.displayName }}
+        </button>
+
+        <keep-alive>
+            <component :is="currentTabComponent" :content="content" class="tab"></component>
+        </keep-alive>
+    </div>
+</template>
+
+<script>
+import BookIntroduction from './BookIntroduction'
+import BookCommentList from './BookCommentList'
+import BookQA from './BookQA'
+
+export default {
+    name: 'TabComponent',
+    props: {
+        content: {
+            type: String,
+            default: ''
+        }
+    },
+    data() {
+        return {
+            currentTab: 'introduction',
+            tabs: [
+                { title: 'introduction', displayName: '图书介绍' },
+                { title: 'comment', displayName: '图书评价' },
+                { title: 'qa', displayName: '图书问答' },
+            ]
+        };
+    },
+    components: {
+        BookIntroduction,
+        BookComment: BookCommentList,
+        BookQa: BookQA,
+    },
+    computed: {
+        currentTabComponent: function() {
+            return 'book-' + this.currentTab
+        }
+    }
+}
+</script>
+```
+多标签页面的实现方式已经在10.7小节中讲述过，这里不再赘述。
+
 **2. 图书介绍组件**
 
+在components目录下新建BookIntroduction.vue,代码如例17-20所示。
+
+例17-20 BookIntroduction.vue
+```
+<template>
+    <div>
+        <p>{{ content }}</p>
+    </div>
+</template>
+
+<script>
+export default {
+    name: 'BookIntroduction',
+    props: {
+        content: {
+            type: String,
+            default: '',
+        }
+    }
+}
+</script>
+```
+组件代码很简单，只是定义了一个content prop,用于接收父组件传出来的图书内容，并进行显示。
+
 **3. 图书评价组件**
+
+图书评价组件负责渲染图书的评论信息，评论信息以列表方式呈现，在本项目中，将单条评论信息封装为一个组件BookCommentListItem，评论信息列表封装为一个组件BookCommentList。
+
+在components目录下新建BookCommentListItem.vue，代码如例17-21所示。
+
+例17-21 BookCommentListItem.vue
+```
+<template>
+    <div class="bookCommentListItem">
+        <div>
+            <span>{{ item.username }}</span>
+            <span>{{ formatTime(item.commentDate) }}</span>
+        </div>
+        <div>{{ item.content }}</div>
+    </div>
+</template>
+
+<script>
+export default {
+    name: 'BookCommentListItem',
+    props: {
+        item: {
+            type: Object,
+            default: () => {}
+        }
+    },
+    inject: ['formatTime'],
+}
+</script>
+```
+该组件比较简单，只是接收父组件传来的item prop，并进行相应的渲染。唯一需要注意的是，在渲染评论日期时，调用了一个formatTime()函数。这是因为服务端传过来的日期时间数据有时并不是我们平常使用的格式。例如Java服务器程序传过来的日期和时间中间会有一个T字符。代码如下所示：
+```
+2019-10-03T09:15:09
+```
+很显然，直接将该日期时间渲染到页面，用户体验不好。为此，在utils/util.js文件中又编写了一个函数，负责日期时间的格式化。该函数的实现代码如下所示：
+```
+export function formatTime(value) {
+    return value.toLocaleString().replace(/T/G, ' ').replace(/\.[\d]{3}Z/, ''))
+}
+```
+同样在App.vue中使用provide选项向后代组件提供该函数，代码如下所示：
+```
+<script>
+import Header from '@/components/Header.vue'
+import Menus from '@/components/Menus.vue'
+import { factPrice, currency, formatTime } from './utils/util.js'
+export default {
+    components: {
+        Header,
+        Menus,
+    },
+    provide() {
+        return {
+            factPrice,
+            currency,
+            formatTime,
+        }
+    }
+}
+</script>
+```
+
 
 **4. 图书问答组件**
 
