@@ -1,35 +1,289 @@
 # 第17章 网上商城项目
 
-
+本章将结合前面所学知识，开发一个网上商城项目。
 
 ## 17.1 脚手架项目搭建
 
+选择好项目存放的目录，使用Vue CLI创建一个脚手架项目，项目名为bookstore。
 
+打开命令提示符窗口，输入下面的命令开始创建脚手架。
 
+```
+vue create bookstore
+```
+选择Manually select features，按照图17-1所示选中所需的功能，选择Vue3.x版本，然后选择为路由使用history模式，如图17-2所示。
+
+接下来，选择ESLint with error prevention only，之后连续按Enter键即可。
+
+可以看到路由(router/index.js)和Vuex状态管理(store/index.js)的目录结构已经生成，在main.js也将router和Store全都导入和注册。main.js的代码如下所示：
+```
+import { createApp } from 'vue'
+import App from './App.vue'
+import router from './router'
+import store from './store'
+
+createApp(App).use(store).use(router).mount('#app')
+```
+项目结构中还有一个views文件夹，在这个文件夹下存放页面级组件，如项目自带的Home组件。一般的小组件存放在components目录下，这些组件可以被复用，通常views组件不会别复用。
 
 ## 17.2 安装和配置axios
 
+本项目采用官网推荐的axios访问服务器接口提供的数据。使用VScode打开项目目录，然后打开终端窗口，执行下面命令来安装axios和vue-axios插件。
+```
+npm install axios vue-axios -S
+```
+编辑项目的main.js文件，引入axios。代码如下所示：
+```
+import { createApp } from 'vue'
+import App from './App.vue'
+import router from './router'
+import store from './store'
+import axios from 'axios'
+import VueAxios from 'vue-axios'
 
+createApp(App).use(store).use(router).use(VueAxios, axios).mount('#app')
+```
+本项目是一个前端项目，与后端提供数据的服务器端是分离的，分别部署在不同的服务器上，因此请求后台数据会涉及一个跨域访问的问题。为此，需要配置一个反向代理来解决这个问题，将请求转发给真正提供数据的后台服务器。
 
+在项目的根目录下（注意是项目根目录，不是src目录）新建一个名为vue.config.js的文件，该文件是Vue脚手架项目的配置文件，在这个配置文件中设置反向代理。代码如例17-1所示。
+
+例17-1 vue.config.js
+```
+module.exports = {
+    devServer: {
+        proxy: {
+            //  /api是后端数据接口的上下文路径
+            '/api': {
+                //这里的地址是后面数据接口的地址
+                target: 'http://111.229.37.167/',
+                //允许跨域
+                changeOrigin: true,
+            }
+        }
+    }
+}
+```
+接下来，在main.js文件中为axios配置全局的baseURL默认值。代码如下所示：
+```
+axios.defaults.baseURL = "/api"
+```
+经过上述配置后，不管前端项目所在的服务器IP和端口是多少，对/book/new发起的请求都会被自动代理为对http://111.229.37.167/api/book/new发起请求。
+
+在本章后续内容中，将提供数据接口的后台服务器称为服务端，而本项目称为前端。
 
 ## 17.3 首页
 
+前端页面的开发首先要做原型设计，最简单的原型设计就是画草图。本项目网上商城首页的布局如图17-4所示。
 
 
+从图17-4中可以看到，本项目的首页大致可以分为6个部分，当然这已经是经过简化的商城首页了。划分出首页的每一部分，便于我们设计组件。粗略来看，至少需要7个组件（加首页组件本身），接下来就需要根据各部分的复杂程度、实现的功能是否可复用等因素去综合考量，最终确定组件的设计。
+
+下图按照图17-4中的6个部分分别介绍其中组件的实现，以及涉及的知识点。
 
 ### 17.3.1 页面头部组件
 
-**1. 头部搜索框组件**
+考虑到搜索框与购物车可能会在多个地方被复用，因此决定将这两部分单独剥离出来，设计成两个组件，然后编写一个Header组件，将搜索框与购物车组件作为子组件在其内部调用。
 
+**1. 头部搜索框组件**
+在components目录下新建HeaderSearch.vue，代码如例17-2所示。
+
+例17-2 HeaderSearch.vue
+```
+<template>
+    <div class="headerSearch">
+        <input type="search" v-model.trim="keyword">
+        <button @click="search">搜索</button>
+    </div>
+</template>
+
+<script>
+export default {
+    name: 'HeaderSearch',
+    data() {
+        return {
+            keyword: ''
+        };
+    },
+    methods: {
+        search() {
+            //当查询关键字与当前路由对象中的查询参数wd值不同时，才调用$router.push()方法
+            if(this.keyword != this.$route.query.wd)
+                this.$router.push({path: '/search', query: { wd: this.keyword }})
+        }
+    },
+}
+</script>
+```
+说明：<br>
+(1)本项目的头部组件(Header组件)在所有页面中都存在，搜索框暂时未有在其他组件中使用，在Vue的单文件组件开发中，建议与父组件紧密耦合的子组件以父组件前缀命名，因此搜索框组件的名字在这里是HeaderSearch。采用这种命名约定的好处是父子组件的关系一目了然，而在IDE中，通常也是按照字母顺序来组织文件，这样相关联的文件自然就排在了一起，便于快速定位和编辑。另一个方式是在以父组件命名的目录中编写子组件，但这种方式会导致许多文件的名字相同，使得再IDE中快速切换文件变得困难。此外，过多的嵌套子目录也增加了在IDE侧边栏中浏览组件所用的时间。当然，万事都不是绝对的，当项目非常复杂，组件数非常多(如100+组件)
+的情况下，采用合理的目录结构管理组件可能更加适合。本章后面的组件名也会采用与HeaderSearch相同的命名约定，就不在重复说明了。
+
+(2)当单击“搜索”按钮时，将输入框中的内容作为查询参数附加在"/search"后面，然后跳转到搜索页面。同时为了避免用户使用相同的关键字查询，在这里做一个判断。
+
+(3)为了节省篇幅，本章所有的实例代码都将省略CSS样式规则。
 
 **2. 头部购物车组件**
 
+在components目录下新建HeaderCart.vue，代码如例17-3所示。
+
+例17-3 HeaderCart.vue
+```
+<template>
+    <div class="headerCart">
+        <a href="javascript:;" @click.prevent="handleCart">
+            <span>购物车{{ cartItemsCount }}</span>
+        </a>
+    </div>
+</template>
+
+<script>
+import { mapGetters } from 'vuex'
+
+export default {
+    name: 'HeaderCart',
+    components: {},
+    computed: {
+        //cart模块带有命名空间
+        ...mapGetters('cart', {
+            //Vuex的store中定义的一个getter，得到购物车中商品的数量
+            //将this.cartItemsCount映射为this.$store.getters['cart/itemsCount']
+            cartItemsCount: 'itemsCount'
+        })
+    },
+    methods: {
+        handleCart() {
+            this.$router.push("/cart");
+        }
+    },
+}
+</script>
+```
+说明：<br>
+(1)本项目采用Vuex进行全局状态管理，HeaderCart组件通过store中定义的一个getter(itemsCount)得到购物车中商品的数量。
+
+(2)本项目采用模块管理应用中不同的状态，目前分为两个带命名空间的模块cart和user，cart模块主要是购物车中商品的存储与管理，user模块主要是用户信息的存储和管理。后面会详细介绍本项目中的状态管理实现。
+
+(3)单击“购物车”按钮，跳转到购物车页面。
+
 **3. 头部组件**
 
+在components目录下新建Header.vue，代码如例17-4所示。
 
+例17-4 Header.vue
+```
+<template>
+    <div class="header">
+        <img src="@/assets/images/logo.png">
+        <HeaderSearch/>
+        <HeaderCart/>
+        <span v-if="!user">你好，请<router-link to="/login">登录</router-link>免费<router-link to="/register">注册</router-link></span>
+        <span v-else>欢迎您,{{ user.username }}, <a href="javascript:;" @click="logout">退出登录</a></span>
+    </div>
+</template>
+
+<script>
+import HeaderSearch from "./17.3.1-1HeaderSearch.vue";
+import HeaderCart from "./17.3.1-2HeaderCart.vue";
+import { mapState, mapMutations } from 'vuex'
+
+export default {
+    name: "Header",
+    
+    components: {
+        HeaderSearch,
+        HeaderCart,
+    },
+
+    computed: {
+        //user模块带有命名空间
+        ...mapState('user', [
+            //将this.user映射为this.$store.state.user.user
+            'user'
+        ])
+    },
+
+    methods: {
+        logout() {
+            this.deleteUser();
+        },
+        //user模块带有命名空间
+        ...mapMutations('user', [
+            //将this.deleteUser映射为this.$store.commit('user/deleteUser')
+            'deleteUser'
+        ])
+    },
+};
+</script>
+```
+说明：<br>
+(1)通过v-if/v-else指令控制用户登录前和登录后显示的文字。用户没有登录时，显示的是“你好，请登录免费注册”，登录后显示的是：“欢迎您，某某，退出登录”。
+
+(2)当用户单击“退出登录”按钮时，提交user/deleteUser mutation删除在store中存储的用户信息。
+
+Header组件的渲染效果如图17-5所示。
 
 ### 17.3.2 菜单组件
 
+菜单是单独定义的一个组件，本项目的菜单只有一级，如果需要定义多级菜单，可参照5.3.1小节的实现。在components目录下新建Menus.vue，代码如例17-5所示。
+
+例17-5 Menus.vue
+```
+<template>
+    <div class="menus">
+        <ul>
+            <li>
+                <router-link to="/home">首页</router-link>
+            </li>
+            <li>
+                <router-link to="newBooks">新书</router-link>
+            </li>
+            <li>
+                <a href="javascript:;">特价书</a>
+            </li>
+            <li>
+                <a href="javascript:;">教材</a>
+            </li>
+            <li>
+                <a href="javascript:;">视听教材</a>
+            </li>
+        </ul>
+    </div>
+</template>
+
+<script>
+
+export default {
+    name: "Menus",
+};
+</script>
+```
+在这个组件比较简单，都是静态代码。由于本项目只是用于演示基于Vue的前端开发涉及的各个功能的实现，所以暂时只提供了首页和新书菜单的实现，其他3个菜单（特价书、教材、视听教材）功能的实现是类似的，只需要服务端提供相应的接口即可。
+
+首页和新书菜单组件渲染的位置（即\<router-view\>）在App.vue中指定。App.vue的代码如例17-6所示。
+
+例17-6 App.vue
+```
+<template>
+    <div id="app">
+        <Header/>
+        <Menus/>
+        <router-view/>
+    </div>
+</template>
+
+<script>
+import Header from '@/components/Header.vue'
+import Menus from '@/components/Menus.vue'
+
+export default {
+    components: {
+        Header,
+        Menus,
+    }
+}
+</script>
+```
+本项目没有用到嵌套路由，所有页面级路由组件的渲染都是这里。换句话说，即所有渲染的页面都是有头部和菜单。
 
 ### 17.3.3 图书分类组件
 
