@@ -470,9 +470,93 @@ export default {
 }
 </script>
 ```
+接下里，在components目录下新建BookCommentList.vue，代码入例17-22所示。
 
+例17-22 BookCommentList.vue
+```
+<template>
+    <div>
+        <h3>{{ message }}</h3>
+        <BookCommentListItem
+            v-for="comment in comments"
+            :item="comment"
+            :key="comment.id" />
+    </div>
+</template>
+
+<script>
+import BookCommentListItem from './BookCommentListItem.vue'
+
+export default {
+    name: 'BookCommentList',
+    data() {
+        return {
+            comments: [],
+            message: '',
+        };
+    },
+    components: {
+        BookCommentListItem,
+    },
+    created() {
+        this.message = '',
+        let url = this.$route.path + "/comment";
+        this.axios.get(url)
+            .then(response => {
+                if(response.status === 200) {
+                    this.comments = response.data;
+                    if(this.comments.length === 0) {
+                        this.message = "当前没有任何评论！"
+                    }
+                }
+            })
+            .catch(error => alert(error));
+    },
+}
+</script>
+```
+BookCommentList组件在created生命周期钩子中向服务端请求数据。数据接口如下：<br>
+http://111.229.37.167/api/book/:id/comment。
+
+
+返回的数据形式如下：
+```
+[
+    {
+        "id": 1,
+        "content": "本书是VC",
+        "commentDate": "2019-11-12T09:14:30",
+        "usenname": "张三",
+        "book": null
+    },
+    {
+        "id": 2,
+        "content": "书收到了",
+        "commentDate": "2019-11-12T09:15:09",
+        "usenname": "李四",
+        "book": null
+    },
+        {
+        "id": 3,
+        "content": "确实不错",
+        "commentDate": "2019-11-14T18:14:30",
+        "usenname": "王五",
+        "book": null
+    },
+]
+```
+接收到数据后，使用v-for指令循环渲染BookCommentListItem组件。
+
+读者可能会考虑是否要给该组件添加组件复用时再次请求评论数据的功能，其实这是没有必要的。当用户在浏览评论信息时切换了标签页再回到评论标签页时，多一两条评论信息并不会影响用户的购买需求，而且并不是每个购买图书的用户都会发表评论。也就是说，图书评论的频次实际上很低的。所以在created生命周期钩子中请求一次数据足以满足我们的应用需求。
 
 **4. 图书问答组件**
+
+图书问答组件其实就是一个摆设，并没有实际的功能。该组件的名字为BookQA，就显示一句话：图书问答。这里就不浪费篇幅介绍代码。
+
+说明：<br>
+(1)BookIntroduction组件定义了一个content prop，用来接收图书的内容，而图书的内容数据是在17.7.3小节介绍的Book组件中得到的，BookTabComponent将作为Book组件的子组件来使用，因此为BookTabComponent组件也定义了一个content prop，在接收到Book组件的图书内容数据后，依次向下级组件传递。当然，可以采用其他方式实现向后代组件传递数据的功能。如利用依赖注入，或者利用Vuex的状态管理来实现。此外，读者可能担心切换到其他标签页是，其所对应的组件没有content prop会不会出错，在第10章中介绍过，如果子组件返回单个根节点，且没有定义prop，那么父组件在该组件上设置的属性会被添加到子组件的根元素上，浏览器对于不识别的属性，并不会提示错误，所以不用担心。实际上，很早之前有一些前端框架和库通过在HTML元素上添加自定义属性来扩展页面的功能。
+
+(2)在《Vue.js从入门到实战》一书中提到过，图书的评论数据只有在切换到评论标签页时才会显示，而且有些用户在购买图书时并不查看评论信息，所以采用异步加载的方式按需加载BookCommentList组件会更合适一些，不过在Vue 3.0中，这里如果采用异步加载组件会报错，这应该是Vue 3.0内部的一个Bug。
 
 ### 17.7.3 Book组件
 
