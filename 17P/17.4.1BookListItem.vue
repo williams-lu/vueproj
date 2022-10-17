@@ -1,9 +1,3 @@
-
-import { currency } from './17.3.5util';
-
-import { factPrice } from './17.3.5util';
-
-import { currency } from './17.3.5util';
 <!-- 17.4.1 商品列表项组件BookListItem.vue -->
 
 <template>

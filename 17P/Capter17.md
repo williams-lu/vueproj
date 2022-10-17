@@ -287,22 +287,494 @@ export default {
 
 ### 17.3.3 图书分类组件
 
+图书分类组件用于显示商品的分类，每个分类都是一个链接，单击链接将跳转到展示该分类下所有商品的页面。
+
+在components目录下新建HomeCategory.vue, 代码如例17-7所示。
+
+例17-7 HomeCategory.vue
+```
+<template>
+    <div class="category">
+        <h3>图书分类</h3>
+        <div v-for="category in categories" :key="category.id">
+            <h5>{{ category.name }}</h5>
+            <router-link v-for="child in category.children" :key="child.id"
+                :to="'/category/' + child.id">{{ child.name }}</router-link>
+        </div>
+    </div>
+</template>
+
+<script>
+export default {
+    name: 'HomeCategory',
+    data() {
+        return {
+            categories: []
+        };
+    },
+
+    created() {
+        this.axios.get("/category")
+            .then(response => {
+                if(response.status === 200) {
+                    this.categories = response.data;
+                }
+            })
+            .catch(error => console.log(error));
+    }
+}
+</script>
+```
+在created生命周期钩子中向服务端请求所有分类数据。服务端提供的该数据接口如下：<br>
+http://111.229.37.167/api/category。
+
+返回的数据形式如下：
+```
+[
+    {
+        "id": 1,
+        "name": "Java EE",
+        "root": true,
+        "parentId": null,
+        "children": [
+            {
+                "id": 3,
+                "name": "Servlet/JSP",
+                "root": false,
+                "parentId": 1,
+                "children": [],
+            },
+            {
+                "id": 4,
+                "name": "应用服务器",
+                "root": false,
+                "parentId": 1,
+                "children": [],
+            },
+            {
+                "id": 5,
+                "name": "MVC框架",
+                "root": false,
+                "parentId": 1,
+                "children": [],
+            },
+        ]
+    },
+    {
+        "id": 2,
+        "name": "程序设计",
+        "root": true,
+        "parentId": null,
+        "children": [
+            {
+                "id": 6,
+                "name": "C/C++",
+                "root": false,
+                "parentId": 2,
+                "children": [
+                    {
+                        "id": 9,
+                        "name": "C11",
+                        "root": false,
+                        "parentId": 6,
+                        "children": [],
+                    }
+                ]
+            },
+            {
+                "id": 7,
+                "name": "Java",
+                "root": false,
+                "parentId": 2,
+                "children": [],
+            },
+            {
+                "id": 8,
+                "name": "C#",
+                "root": false,
+                "parentId": 2,
+                "children": [],
+            },
+        ]
+    },
+]
+```
+子分类是放到children数组属性中的，本项目中未用到root和parentId属性，前者可用于列出某个根分类下的所有商品，后者可以用于查找某个分类的父分类，甚至反向查找所有上级分类。
+
+清楚了数据接口返回的数据解构，那么HomeCategory组件的代码也就清楚了。
+
+HomeCategory组件的渲染效果如图17-6所示。
 
 ### 17.3.4 广告图片轮播组件
 
+广告图片轮播功能在电商网站属于标配的功能，其实现是通过JavaScript代码控制图片的轮播，并处理一些控制图片显示的单击事件。
+
+由于Vue 3.0推出的时间并不长，在写作业时，之前Vue 2.x下的很多好用的图片轮播插件还没有移植到Vue 3.0下，如果我们自己编写一个成熟的图片轮播组件，又会增加本项目的复杂度，因此这里暂时先用一张静止的图片代替图片轮播。如果读者对图片轮播功能的实现感兴趣，可以在网上找到很多案例，将其封装为组件使用即可。不过相信读者在看到这本书是，支持Vue 3.0的图片轮播插件也就有了。
+
+在components目录下新建HomeScrollPic.vue，代码如例17-8所示。
+
+例17-8 HomeScrollPic.vue
+```
+<template>
+    <div class="scrollPic">
+        <img scr="/ad01.jpg">
+    </div>
+</template>
+
+<script>
+export default {
+};
+</script>
+```
+图片是保存在public目录下的，该目录下的资源直接通过根路径"/"引用即可。
+
+HomeScrollPic组件的渲染效果如图17-7所示。
 
 ### 17.3.5 热门推荐组件
 
+热门推荐组件用于显示热门商品，用户如果对某一热门商品感兴趣，可以单击该商品链接，进入商品详情页面。
+
+在components目录下新建HomeBooksHot.vue，代码如例17-9所示。
+
+例17-9 HomeBooksHot.vue
+```
+<template>
+    <div class="bookRecommend">
+        <h3>热门推荐</h3>
+        <ul>
+            <li v-for="book in books" :key="book.id">
+                <router-link :to="'/book/' + book.id">
+                    {{ book.title }}
+                    <span>{{ currency(factPrice(book.price, book.discount)) }}</span>
+                </router-link>
+            </li>
+        </ul>
+    </div>
+</template>
+
+<script>
+export default {
+    name: 'HomeBooksHot',
+    data() {
+        return {
+            books: []
+        };
+    },
+    inject: ['factPrice', 'currency'],
+    created() {
+        this.axios.get("/book/hot")
+            .then(response => {
+                if(response.status === 200) {
+                    this.books = response.data;
+                }
+            })
+            .catch(error => console.log(error));
+    },
+}
+</script>
+```
+在created生命周期钩子中向服务端请求热门商品数据。服务端提供的该数据接口如下:<br>
+http://111.229.37.167/api/book/hot。
+
+返回的数据形式如下：
+```
+[
+    {
+        "id": 1,
+        "title": "VC++深入详解",
+        "author": "孙鑫",
+        "price": 168.0,
+        "discount": 0.95,
+        "imgUrl": "/api/img/vc++.jpg",
+        "bigImgUrl": "/api/img/vc++big.jpg",
+        "bookConcern": null,
+        "publishDate": null,
+        "brief": null
+    },
+    {
+        "id": 2,
+        "title": "Java编程思想",
+        "author": "Bruce Eckel",
+        "price": 108.0,
+        "discount": 0.5,
+        "imgUrl": "/api/img/Javathink.jpg",
+        "bigImgUrl": "/api/img/Javathinkbig.jpg",
+        "bookConcern": null,
+        "publishDate": null,
+        "brief": null
+    }
+]
+```
+实际上，热门推荐组件用不到全部信息，只是服务端的数据接口返回的数据就是如此。那么从这些数据中选择有用的数据使用即可。
+
+一般电商网站的商品有定价和实际销售价格，在前端展示商品的时候需要同时显示这两种价格。从这里返回的数据来看，服务端只提供了商品的定价和折扣，并没有实际销售价格，那么实际销售价格就需要我们自己来处理。这在实际开发中也很常见，不能期望服务端的开发人员专门为你的需求提供一个接口，也许还有其他前端也要用到这个接口。
+
+实际价格是用定价与折扣相乘得到的，由于实际价格在多处要用到，因此编写一个单独的函数来计算实际价格。此外，还要考虑价格显示的问题，我们知道，价格只是显示到分就可以了，而在计算过程中，由于是浮点数，可能会出现小数点后两位之后的数据，所以要进行处理。除此之外，价格一般还会加上货币符号，如国内会加上人民币符号￥。为此，再编写一个函数，专门负责价格的格式化问题。
+
+我们将这两个函数放到单独的JS文件中，在src目录下新建utils文件夹，在该文件夹下新建util.js文件。代码如例17-10所示。
+
+例17-10 util.js
+```
+const digitsRE = /(\d{3})(?=\d)/g
+
+export function factPrice(value, discount) {
+    value = parseFloat(value);
+    discount = parseFloat(discount);
+    if(!discount) return vulue
+    return value * discount;
+}
+
+export function currency (vulue, currency, decimals) {
+    value = parseFloat(value)
+    if (!isFinite(value) || (!value && value !== 0)) return ''
+    currency = currency != null ? currency : '￥'
+    decimals = decimals != null ? decimals : 2
+    var stringified = Math.abs(value).toFixed(decimals)
+    var _int = decimals
+        ? stringified.slice(0, -1 - decimals)
+        : stringified
+    var i = _int.length % 3
+    var head = i > 0
+        ? (_int.slice(0, 1) + (_int.length > 3 ? ',' : ''))
+        : ''
+    var _float = decimals
+        ? stringified.slice(-1 - decimals)
+        : ''
+    var sign = value < 0 ? '-' : ''
+    return sign + currency + head + _int.slice(i).replace(digitsRE, '$1,') + _float
+}
+```
+为了方便在各个组件内使用这两个函数，我们在App组件内通过provide选项向所有后代组件提供两个函数。编辑App.vue，修改后的代码如下所示：
+```
+<template>
+    <div id="app">
+        <Header/>
+        <Menus/>
+        <router-view/>
+    </div>
+</template>
+
+<script>
+import Header from '@/components/Header.vue'
+import Menus from '@/components/Menus.vue'
+import { factPrice, currency } from './utils/util.js'
+
+export default {
+    components: {
+        Header,
+        Menus,
+    },
+    provide() {
+        return {
+            factPrice,
+            currency,
+        }
+    }
+}
+</script>
+```
+之后记得在组件内使用inject选项注入这两个函数，即例17-9中以下这句代码：
+```
+inject: ['factPrice', 'currency'],
+```
+了解这两个函数后，相信读者对例17-9的代码也就清楚了。
+
+>提示：<br>
+>utils目录下存放一些有用的工具函数库JS文件。
+
+HomeBooksHot组件的渲染效果如图17-8所示。
 
 ### 17.3.6 新书上市组件
 
+新书上市组件用于显示刚上市的商品，用户如果对某一商品感兴趣，可以单击该商品链接，进入商品详情页面。
+
+在components目录下新建BooksNew.vue，由于该组件会被复用，所以这里没有使用主页的前缀Home。BooksNew组件的代码如例17-11所示。
+
+例17-11 BooksNew.vue
+```
+import { currency } from './17.3.5util';
+
+import { factPrice } from './17.3.5util';
+
+import { currency } from './17.3.5util';
+
+<template>
+    <div class="booksNew">
+        <h3>新书上市</h3>
+        <div class="book" v-for="book in books" :key="book.id">
+            <figure>
+                <router-link :to="'/book/' + book.id">
+                <img :src="book.imgUrl">
+                <figcaption>
+                    {{ book.title }}
+                </figcaption>
+                </router-link>
+            </figure>
+            <p>
+                {{ currency(factPrice(book.price, book.discount)) }}
+                <span>{{ currency(book.price) }}</span>
+            </p>
+        </div>
+    </div>
+</template>
+
+<script>
+export default {
+    name: '',
+    props: [''],
+    data() {
+        return {
+            books: [],
+        };
+    },
+    inject: ['factPrice', 'currency'],
+    created() {
+        this.axios.get("/book/new")
+        .then(renponse => {
+            if( response.status === 200 {
+                this.loading = false;
+                this.books = response.data;
+            }
+        })
+        .catch(error => console.log(error));
+    }
+}
+</script>
+```
+在created生命周期钩子中向服务端请求新书的数据。服务端提供的该数据接口如下：<br>
+http://111.229.37.167/api/book/new。
+
+返回的数据形式如同/book/hot。
+
+BooksNew组件的渲染效果如图17-9所示。
 
 ### 17.3.7 首页组件
 
+首页的各个组成部分编写完成后，就可以开始集成这几个部分。首页作为页面级组件，放到views目录下。在views目录下新建Home.vue，代码如例17-12所示。
+
+例17-12 Home.vue
+```
+<template>
+    <div class="class">
+        <HomeCategory/>
+        <HomeScrollPic/>
+        <HomeBooksHot/>
+        <BooksNew/>
+    </div>
+</template>
+
+<script>
+import HomeCategory from '@/components/HomeCategory.vue'
+import HomeScrollPic from '@/components/HomeScrollPic.vue'
+import HomeBooksHot from '@/components/HomeBooksHot.vue'
+import BooksNew from '@/components/BooksNew.vue'
+
+export default {
+    name: 'home',
+    components: {
+        HomeCategory,
+        HomeScrollPic,
+        HomeBooksHot,
+        BooksNew
+    }
+}
+</script>
+```
+Home组件比较简单，只是用于拼接各个子组件。Home组件的渲染效果如图17-10所示。
 
 ## 17.4 商品列表
 
+商品列表页面以列表形式显示所有商品，我们将商品列表和商品列表项分别定义为单独的组件，商品列表组件作为父组件在其内部循环渲染商品列表项子组件。
+
 ### 17.4.1 商品列表项组件
+
+在components目录下新建BookListItem.vue，代码如例17-13所示。
+
+例17-13 BookListItem.vue
+```
+<template>
+    <div class="bookListItem">
+        <div>
+            <img :src="item.bigImgUrl">
+        </div>
+        <p class="title">
+            <router-link
+                :to="{ name: 'book', params: { id: item.id }}"     //①
+                target="_blank">         //②
+                {{ item.title }}
+            </router-link>
+        </p>
+        <p>
+            <span class="factPrice">
+                {{ currency(factPrice(item.price, item.discount)) }}
+            </span>
+            <span>
+                定价：<i class="price">{{ currency(item.price) }}</i>
+            </span>
+        </p>
+        <p>
+            <span>{{ item.author }}</span>
+            <span>{{ item.publishDate  }}</span>
+            <span>{{ item.bookConcern }}</span>
+        </p>
+        <p>
+            {{ item.brief }}
+        </p>
+        <p>
+            <button class="addCartButton" @click=addCartItem(item)>
+                加入购物车
+            </button>
+        </p>
+    </div>
+</template>
+
+<script>
+import { mapActions } from 'vuex'
+
+export default {
+    name: 'BookListItem',
+    props: {
+        item: {         //③
+            type: Object,
+            default: () => {}
+        }
+    },
+    methods: {
+        ...mapActions('cart', {
+            //将this.addCart()映射为this.$store。commit('cart/addProductToCart')
+            addCart: 'addProductToCart'
+        }),
+        factPrice(price, discount) {
+            return price * discount;
+        },
+        addCartItem(item) {
+            let quantity = 1;
+            let newItem = {
+                ...item,
+                price: this.factPrice(item.price, item.discount),         //④
+                quantity          //⑤
+            };
+            this.addCart(newItem);
+            this.$router.push("/cart");       //⑥
+        }
+    }
+}
+</script>
+```
+说明：<br>
+(1)\<router-link\>的to属性使用了表达式，因此要用v-bind指令（这里使用的是简写语法）进行绑定。params和path字段不能同时存在，如果使用了path字段，那么params将被忽略，所以这里使用了命名路由。当然，也可以采用前面例子中拼接路径字符串的方式。
+
+(2)\<router-link\>默认渲染为\<a\>标签，所有路由的跳转都是在当前浏览器窗口中完成的，但有时希望在新的浏览器窗口中打开目标页面，那么可以使用target="_blank"。但要注意，如果使用v-slot API定制\<router-link\>，将其渲染为其他标签，那么就不能使用\<a\>标签的target属性，只能编写单击事件响应代码，然后通过windows.open()方法打开一个新的浏览器窗口。
+
+(3)BookListItem组件需要的商品数据是由父组件通过prop传进来的，所以这里定义了一个item prop。
+
+(4)单击“加入购物车”按钮时，会调用addCartItem()方法将该商品加入购物车中，由于购物车中的商品不需要商品的定价，所以这里先计算出商品的实际价格。
+
+(5)购物车中保存的每种商品都有一个数量，通过quantity字段表示，在商品列表项页面中的“加入购物车”功能是一种便捷方式，商品的数量默认为1，后面会看到商品详情页面中加入任意数量商品功能的实现。
+
+(6)在添加商品到购物车中后，路由跳转到购物车中页面，这也是电商网站通常采用的方式，可以刺激用户的冲动消费。
+
+BookListItem组件的渲染效果如图17-11所示。
 
 ### 17.4.2 商品列表组件
 

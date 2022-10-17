@@ -1,9 +1,3 @@
-
-import { currency } from './17.3.5util';
-
-import { factPrice } from './17.3.5util';
-
-import { currency } from './17.3.5util';
 <!-- 17.3.6 新书上市组件 -->
 
 <template>
