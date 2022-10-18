@@ -778,9 +778,97 @@ BookListItem组件的渲染效果如图17-11所示。
 
 ### 17.4.2 商品列表组件
 
+商品列表组件作为商品列表项组件的父组件，负责为商品列表项组件提供商品数据，并通过v-for指令循环渲染商品列表项组件。
+
+在components目录下新建BookList.vue，代码如例17-14所示。
+
+例17-14 BookList.vue
+```
+<template>
+    <div>
+        <div v-for="book in list" :key="book.id">
+            <BookListItem :item="book" />
+        </div>
+    </div>
+</template>
+
+<script>
+import BookListItem form "./BookListItem"
+
+export default {
+    name: 'BookList',
+    props: {
+        list: {
+            type: Array,
+            default: () => []
+        }
+    },
+    components: {
+        BookListItem
+    },
+}
+</script>
+```
+BookList组件的代码比较简单，主要就是通过v-for指令循环渲染BookListItem子组件。某些项目的实现是在列表组件中想服务器端请求数据渲染列表项，但在本项目中，BookList组件会被多个页面复用，并且请求的数据接口是不同的，因此BookList组件仅仅是定义了一个list prop用来接收父组件传递进来的商品列表数据。
+
+BookList组件的渲染效果如图17-12所示。
+
 ## 17.5 分类商品和搜索结果页面
 
+单击某个分类链接，将跳转到分类商品页面，在该页面下，将以列表形式列出该分类下的所有商品信息；当在搜索框中输入某个关键字，单击“搜索”按钮后，将跳转到搜索结果页面，在该页面下，也是以列表形式列出匹配该关键字的所有商品信息。既然这两个页面都是以列表形式显示商品信息，那么可以将它们合并为一个页面组价来实现，在该页面中无非就是根据路由的路径来动态切换页面标题，以及向服务器端请求不同的数据接口。
+
+先给出这个页面的路由配置，编辑router目录下的index.js文件。修改后的代码如例17-15所示。
+
+例17-15 router/index.js
+```
+...
+const routes = [
+    {
+        path: '/',
+        redirect: {
+            name: 'home'
+        }
+    },
+    {
+        path: '/home',
+        name: 'home',
+        meta: {
+            title: '首页'
+        },
+        component: Home
+    },
+    {
+        path: '/category/:id',
+        name: 'category',
+        meta: {
+            title: '分类图书'
+        },
+        component: () => import('../views/Books.vue')
+    },
+    {
+        path: '/search',
+        name: 'search',
+        meta: {
+            title: '搜索结果'
+        },
+        component: () => import('../views/Books.vue')
+    },
+]
+
+//设置页面的标题
+router.afterEach((to) => {
+    document.title = to.meta.title;
+})
+
+...
+```
+在路由配置中，采用的是延迟加载路由的方式，只有在路由到该组件时才加载。关于延迟加载路由，可以参看14.14小节。
+
+将分类图书（/category/:id)和搜索结果（/search）的导航链接对应到一个目标路由组件Books上，同时根据14.10.1小节介绍的知识，利用全局后置钩子来为路由跳转后的页面设置标题。
+
 ### 17.5.1 Loading组件
+
+考虑到图书列表的数据是从
 
 ### 17.5.2 Books组件
 
