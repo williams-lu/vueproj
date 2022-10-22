@@ -868,15 +868,259 @@ router.afterEach((to) => {
 
 ### 17.5.1 Loading组件
 
-考虑到图书列表的数据是从
+考虑到图书列表的数据是从服务器端去请求数据及网络状况的原因，图书列表的显示可能会延迟，为此，我们决定编写一个Loading组件，在图书列表数据还没有渲染时，给用户一个提示，让用户稍安勿躁。
+
+在10.9小节的例10-6中，已经给出了一个使用loading图片实现加载提示的示例，读者可以沿用该示例实现加载提示。在这里换一种实现方式，考虑到图片本身加载也需要时间（虽然loading图片一般很小），采用CSS实现loading加载的动画效果，这种实现在网上很多，本项目从中找了一个实现，并将其封装为组件。
+
+在components目录下新建Loading.vue。代码如例17-16所示。
+
+例17-16 Loading.vue
+```
+<template>
+    <div class="loading">
+        <div class="shadow">
+            <div class="loader">
+                <div class="mask"></div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+export default {
+    name: "Loading",
+};
+</script>
+
+<style scoped>
+.shadow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    margin-top: -50px;
+    margin-left: -50px;
+    box-shadow: -2px 2px 10px 0 rgba(0, 0, 0, 0.5),
+        2px -2px 10px 0 rgba(255, 255, 255, 0.5);
+}
+
+.loader {
+    background: -webkit-linear-gradient(
+        left,
+        skyblue 50%,
+        #fafafa 50%
+    ); /* Foreground color, Backgroud color */
+    border-radius: 100%;
+    height: 100px;  /* Height and width */
+    width: 100px;  /* Height and width */
+    animation: time 8s steps(500, start) infinite;
+}
+
+.mask {
+    border-radius: 100% 0 0 100% / 50% 0 0 50%;
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 50%;
+    animation: mask 8s steps(250, start) infinite;
+    transform-origin: 100% 50%;
+}
+
+@keyframes time {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes mask {
+    0% {
+        backgroud: #fafafa; /* Background color */
+        transform: rotate(0deg);
+    }
+    50% {
+        background: #fafafa; /* Background color */
+        transform: rotate(-180deg);
+    }
+    50.01% {
+        background: skyblue; /* Foreground color */
+        transform: rotate(0deg);
+    }
+    100% {
+        background: skyblue; /* Foreground color */
+        transform: rotate(-180deg);
+    }
+}
+</style>
+```
+主要代码就是CSS的样式规则，我们没必要去深究具体的实现细节，当然想研究CSS如何实现该种动画效果就另当别论。
+
+Loading组件的渲染效果如图17-13所示。
 
 ### 17.5.2 Books组件
 
+有了Loading组件，接下来就可以编写Books组件了。在views目录下新建Books.vue，代码如例17-17所示。
+
+例17-17 Books.vue
+```
+<template>
+    <div>
+        <Loading v-if="loading" />   //1
+        <h3 v-else>{{ title }}</h3>
+        <BookList :list="books" v-if="books.length"/>  //6
+        <h1>{{ message }}</h1>
+    </div>
+</template>
+
+<script>
+import BookList form "@/components/BookList"
+import Loading from '@/components/Loading.vue'
+
+export default {
+    name: 'Books',
+    data() {
+        return {
+            title: '',
+            books: [],
+            message: '',
+            loading: true       //1
+        };
+    },
+
+    beforeRouteEnter(to, from, next) {      //4
+        next(vm => {
+            vm.title = to.meta.title;
+            let url = vm.setRequestUrl(to.fullPath);
+            vm.getBooks(url);
+        });
+    },
+
+    beforeRouteUpdate(to) {           //5
+        let url = this.setRequestUrl(to.fullPath);
+        this.getBooks(url);
+        return true;
+    },
+
+    components: {
+        BookList,
+        Loading
+    },
+
+    methods: {
+        getBooks(url) {
+            this.message = '';
+            this.axios.get(url)
+                .then(response => {
+                    if(response.status === 200) {
+                        this.loading = false;            //1
+                        this.books = response.data;
+                        if(this.books.length === 0) {
+                            if(this.$route.name === "category")      //3
+                                this.message = "当前分类下没有图书！"
+                            else
+                                this.message = "没有搜索到匹配的图书！"
+                        }
+                    }
+                })
+                .catch(error => alert(error));
+        },
+        //动态设置服务器数据接口的请求URL
+        setRequestUrl(path) {      //2
+            let usl = path;
+            if(path.indexOf("/category") != -1) {       //3
+                url = "/book" + url;
+            }
+            return url;
+        }
+    }
+}
+</script>
+```
+说明：<br>
+(1)为了控制Loading组件的显示与删除，定义一个数据属性loading，其值默认为true，然后使用v-if指令进行条件判断。当成功接收到服务端发回的数据时，将数据属性loading设置为false，这样v-if指令就会删除Loading组件。
+
+(2)因为分类商品和搜索结果使用的是同一个组件，但是向服务端请求的数据接口是不同的，分类商品请求的数据接口是/book/category/6，而搜索请求的数据接口是/search?wd=keyword，为此定义了setRequestUrl方法动态设置请求的接口URL。
+
+(3)判断目标路由有多种方式，可以在导航守卫中通过to.path或to.fullPath判断，也可以使用this.$route.path和this.$route.fullpath判断，如果在路由配置中使用了命名路由，还可以使用this.$route.name判断，如本例所示。
+
+(4)在组件内导航守卫beforeRouteEnter()中请求初次渲染的数据，当然也可以利用created生命周期钩子完成相同的功能。
+
+(5)由于搜索框是独立的，用户可能会多次进行搜索行为，所以使用组件内守卫beforeRouteUpdate()，在组件被复用的时候再次请求搜索。
+
+(6)Booklist组件所需要的数据是通过list prop传出去的，由于父组件生命周期的调用时机问题，可能会出现子组件已经mounted，而父组件的数据才传过去，导致子组件不能正常渲染，为此可以添加一个v-if指令，使用列表数据的长度作为条件判断，确保子组件能正常接收到数据并渲染。在本项目使用的Vue.js版本和采用的实现方式下，不添加v-if指令也能正常工作，如果读者以后遇到子组件的列表数据不能正常渲染，可以试试这种解决办法。
+
+Books组件的渲染效果与Booklist组件渲染的效果是类似的，只是多了一个标题，以及在没有请求到数据时给出的一个提示信息。
+
 ## 17.6 新书页面
+
+当单击菜单栏的“新书”菜单时，将跳转到新书页面。这里直接复用了BooksNew组件（参看17.3.6小节），只是在路由配置中为新书页面添加了一项路由配置。代码如下所示：
+```
+const routes = [
+    ...
+    {
+        path: '/newBooks',
+        name: 'newBooks',
+        meta: {
+            title: '新书上市'
+        },
+        component: () => import('../components/BooksNew.vue')
+    }
+    ...
+]
+```
+渲染效果参见图17-9。
 
 ## 17.7 图书详情页面
 
+不管从何处单击图书链接，都将跳转到图书详情页面。图书详情页面中有两个子组件，其中一个是实现图书数量加减的组件，如图17-14所示；另一个是用动态组件实现的标签组件，用于在图书介绍、图书评价和图书问答三者之间进行切换，如图17-15所说。
+
 ### 17.7.1 加减按钮组件
+
+加减按钮组件由3部分组成：一个输入框和两个加减按钮。当然，至于采用什么页面元素实现加减按钮都无所谓了，本项目采用的是\<a\>标签实现加减按钮。
+
+在components目录下新建AddSubtractButton.vue，代码如例17-18所示。
+
+例17-18 AddSubtractButton.vue
+```
+<template>
+    <div class="addSubtractButton">
+        <input v-model="quantity" type="number">
+        <div>
+            <a class="add" href="javascript:;" @click="handleAdd">+</a>
+            <a class="sub" @click="handleSubtract"
+                :class="{ disabled: quantity === 0 , actived: quantity > 0 }"
+                href="javascript:;" >
+                -
+            </a>
+        </div>
+    </div>
+</template>
+
+<script>
+    
+export default {
+    name: 'AddSubtractButton',
+    data() {
+        return {
+            quantity: 0
+        }
+    },
+    methods: {
+        handleAdd() {
+            this.quantity++;
+            this.$emit("update-quantity", this.quantity);
+        },
+        handleSubtract() {
+            this.quantity--;
+            this.$emit("update-quantity", this.quantity);
+        }
+    }
+}
+</script>
+```
+用户可直接在输入框中输入购买数量，也可以通过加减按钮增减数量，当数量为0时，通过CSS样式控制减按钮不可用。加减组件通过自定义事件updateQuantity向父组件传递数据。
+
+另外要注意的是，提交的自定义事件必须采用kebab-case风格命名。
 
 ### 17.7.2 标签页组件
 

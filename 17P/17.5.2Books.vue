@@ -32,6 +32,12 @@ export default {
         });
     },
 
+    beforeRouteUpdate(to) {
+        let url = this.setRequestUrl(to.fullPath);
+        this.getBooks(url);
+        return true;
+    },
+
     components: {
         BookList,
         Loading
